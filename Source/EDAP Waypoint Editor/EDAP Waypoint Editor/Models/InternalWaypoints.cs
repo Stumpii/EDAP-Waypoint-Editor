@@ -27,6 +27,16 @@ namespace EDAP_Waypoint_Editor.Models
     [AddINotifyPropertyChangedInterface]
     public class InternalWaypoint
     {
+        public InternalWaypoint()
+        {
+        }
+
+        public InternalWaypoint(string SystemName, String StationName)
+        {
+            this.SystemName = SystemName;
+            this.StationName = StationName;
+        }
+
         public string Name { get; set; } = "";
         public string SystemName { get; set; } = "";
         public string StationName { get; set; } = "";
@@ -45,6 +55,15 @@ namespace EDAP_Waypoint_Editor.Models
 
     public class ShoppingItem
     {
+        public ShoppingItem()
+        {
+        }
+
+        public ShoppingItem(string Name)
+        {
+            this.Name = Name;
+        }
+
         public string Name { get; set; }
         public int Quantity { get; set; }
     }

@@ -27,6 +27,9 @@ namespace EDAP_Waypoint_Editor
 
         private ProgramSettings programSettings = new ProgramSettings();
 
+        private List<string> GalaxyMapBookmarkTypesList = new List<string>() { "", "Favorite", "System", "Body", "Station", "Settlement" };
+        private List<string> SystemMapBookmarkTypesList = new List<string>() { "", "Favorite", "Body", "Station", "Settlement", "Navigation Panel" };
+
         #endregion Fields
 
         #region Constructors
@@ -167,8 +170,11 @@ namespace EDAP_Waypoint_Editor
 
                 this.DataContext = Waypoints.Waypoints;
 
-                FavFoldersDataGrid.ItemsSource = Waypoints.Waypoints;
+                DataGridWaypoints.ItemsSource = Waypoints.Waypoints;
                 DataGridGlobalShoppingList.ItemsSource = Waypoints.globalshoppinglist.BuyCommodities;
+
+                GridGlobalShopping.DataContext = Waypoints.globalshoppinglist;
+                Griditems.DataContext = null;
             }
 
             return true;
@@ -214,7 +220,8 @@ namespace EDAP_Waypoint_Editor
 
             foreach (var shopitem in Waypoints.globalshoppinglist.BuyCommodities)
             {
-                waypointg.BuyCommodities.Add(shopitem.Name, shopitem.Quantity);
+                if (!waypointg.BuyCommodities.ContainsKey(shopitem.Name))
+                    waypointg.BuyCommodities.Add(shopitem.Name, shopitem.Quantity);
             }
 
             RawWaypoints.Add("GlobalShoppingList", waypointg);
@@ -236,12 +243,14 @@ namespace EDAP_Waypoint_Editor
 
                 foreach (var shopitem in item.BuyCommodities)
                 {
-                    waypoint.BuyCommodities.Add(shopitem.Name, shopitem.Quantity);
+                    if (!waypoint.BuyCommodities.ContainsKey(shopitem.Name))
+                        waypoint.BuyCommodities.Add(shopitem.Name, shopitem.Quantity);
                 }
 
                 foreach (var shopitem in item.SellCommodities)
                 {
-                    waypoint.SellCommodities.Add(shopitem.Name, shopitem.Quantity);
+                    if (!waypoint.SellCommodities.ContainsKey(shopitem.Name))
+                        waypoint.SellCommodities.Add(shopitem.Name, shopitem.Quantity);
                 }
 
                 RawWaypoints.Add(i.ToString(), waypoint);
@@ -267,14 +276,26 @@ namespace EDAP_Waypoint_Editor
             {
                 LoadWaypointFile(programSettings.LastOpenFilepath);
             }
-            //LoadWaypointFile("C:\\Users\\shuttle\\OneDrive\\Programming\\Python\\EDAPGui - Stumpii-Main\\waypoints\\waypoints.json");
+            // Load default combos, etc/
+            ComboGalaxyBookmarkType.ItemsSource = GalaxyMapBookmarkTypesList;
+            ComboSystemBookmarkType.ItemsSource = SystemMapBookmarkTypesList;
         }
 
         private void FavFoldersDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var wp = (InternalWaypoint)FavFoldersDataGrid.SelectedItem;
-            DataGridBuyShoppingList.ItemsSource = wp.BuyCommodities;
-            DataGridSellShoppingList.ItemsSource = wp.SellCommodities;
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+                Griditems.DataContext = wp;
+                DataGridBuyShoppingList.ItemsSource = wp.BuyCommodities;
+                DataGridSellShoppingList.ItemsSource = wp.SellCommodities;
+            }
+            else
+            {
+                Griditems.DataContext = null;
+                DataGridBuyShoppingList.ItemsSource = null;
+                DataGridSellShoppingList.ItemsSource = null;
+            }
         }
 
         private void MenuFileExit(object sender, RoutedEventArgs e)
@@ -315,6 +336,231 @@ namespace EDAP_Waypoint_Editor
             {
                 SaveWaypointFile(saveFileDialog.FileName);
                 programSettings.LastOpenFilepath = saveFileDialog.FileName;
+            }
+        }
+
+        private void ButtonWaypointUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                int currindex = Waypoints.Waypoints.IndexOf(wp);
+                Waypoints.Waypoints.Move(currindex, MoveDirection.Up);
+
+                DataGridWaypoints.Items.Refresh();
+            }
+        }
+
+        private void ButtonWaypointDown_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                int currindex = Waypoints.Waypoints.IndexOf(wp);
+                Waypoints.Waypoints.Move(currindex, MoveDirection.Down);
+
+                DataGridWaypoints.Items.Refresh();
+            }
+        }
+
+        private void ButtonBuyUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                if (DataGridBuyShoppingList.SelectedItem is ShoppingItem)
+                {
+                    var item = (ShoppingItem)DataGridBuyShoppingList.SelectedItem;
+
+                    int currindex = wp.BuyCommodities.IndexOf(item);
+                    wp.BuyCommodities.Move(currindex, MoveDirection.Up);
+
+                    DataGridBuyShoppingList.Items.Refresh();
+                }
+            }
+        }
+
+        private void ButtonBuyDown_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                if (DataGridBuyShoppingList.SelectedItem is ShoppingItem)
+                {
+                    var item = (ShoppingItem)DataGridBuyShoppingList.SelectedItem;
+
+                    int currindex = wp.BuyCommodities.IndexOf(item);
+                    wp.BuyCommodities.Move(currindex, MoveDirection.Down);
+
+                    DataGridBuyShoppingList.Items.Refresh();
+                }
+            }
+        }
+
+        private void ButtonSellUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                if (DataGridSellShoppingList.SelectedItem is ShoppingItem)
+                {
+                    var item = (ShoppingItem)DataGridSellShoppingList.SelectedItem;
+
+                    int currindex = wp.SellCommodities.IndexOf(item);
+                    wp.SellCommodities.Move(currindex, MoveDirection.Up);
+
+                    DataGridSellShoppingList.Items.Refresh();
+                }
+            }
+        }
+
+        private void ButtonSellDown_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                if (DataGridSellShoppingList.SelectedItem is ShoppingItem)
+                {
+                    var item = (ShoppingItem)DataGridSellShoppingList.SelectedItem;
+
+                    int currindex = wp.SellCommodities.IndexOf(item);
+                    wp.SellCommodities.Move(currindex, MoveDirection.Down);
+
+                    DataGridSellShoppingList.Items.Refresh();
+                }
+            }
+        }
+
+        private void ButtonGlobalBuyUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridGlobalShoppingList.SelectedItem is ShoppingItem)
+            {
+                var item = (ShoppingItem)DataGridGlobalShoppingList.SelectedItem;
+
+                int currindex = Waypoints.globalshoppinglist.BuyCommodities.IndexOf(item);
+                Waypoints.globalshoppinglist.BuyCommodities.Move(currindex, MoveDirection.Up);
+
+                DataGridGlobalShoppingList.Items.Refresh();
+            }
+        }
+
+        private void ButtonGlobalBuyDown_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridGlobalShoppingList.SelectedItem is ShoppingItem)
+            {
+                var item = (ShoppingItem)DataGridGlobalShoppingList.SelectedItem;
+
+                int currindex = Waypoints.globalshoppinglist.BuyCommodities.IndexOf(item);
+                Waypoints.globalshoppinglist.BuyCommodities.Move(currindex, MoveDirection.Down);
+
+                DataGridGlobalShoppingList.Items.Refresh();
+            }
+        }
+
+        private void ButtonWaypointAdd_Click(object sender, RoutedEventArgs e)
+        {
+            Waypoints.Waypoints.Add(new InternalWaypoint("New System", ""));
+            DataGridWaypoints.Items.Refresh();
+        }
+
+        private void ButtonBuyAdd_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                wp.BuyCommodities.Add(new ShoppingItem("New Item"));
+                DataGridBuyShoppingList.Items.Refresh();
+            }
+        }
+
+        private void ButtonSellAdd_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                wp.SellCommodities.Add(new ShoppingItem("New Item"));
+                DataGridSellShoppingList.Items.Refresh();
+            }
+        }
+
+        private void ButtonGlobalBuyAdd_Click(object sender, RoutedEventArgs e)
+        {
+            Waypoints.globalshoppinglist.BuyCommodities.Add(new ShoppingItem("New Item"));
+            DataGridGlobalShoppingList.Items.Refresh();
+        }
+
+        private void ButtonWaypointDel_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+                Waypoints.Waypoints.Remove(wp);
+                DataGridWaypoints.Items.Refresh();
+            }
+        }
+
+        private void ButtonBuyDel_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                if (DataGridBuyShoppingList.SelectedItem is ShoppingItem)
+                {
+                    var item = (ShoppingItem)DataGridBuyShoppingList.SelectedItem;
+
+                    wp.BuyCommodities.Remove(item);
+
+                    DataGridBuyShoppingList.Items.Refresh();
+                }
+            }
+        }
+
+        private void ButtonSellDel_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                if (DataGridSellShoppingList.SelectedItem is ShoppingItem)
+                {
+                    var item = (ShoppingItem)DataGridSellShoppingList.SelectedItem;
+
+                    wp.SellCommodities.Remove(item);
+
+                    DataGridSellShoppingList.Items.Refresh();
+                }
+            }
+        }
+
+        private void ButtonGlobalBuyDel_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridGlobalShoppingList.SelectedItem is ShoppingItem)
+            {
+                var item = (ShoppingItem)DataGridGlobalShoppingList.SelectedItem;
+
+                Waypoints.globalshoppinglist.BuyCommodities.Remove(item);
+
+                DataGridGlobalShoppingList.Items.Refresh();
+            }
+        }
+
+        private void ButtonSellAddAll_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                wp.SellCommodities.Add(new ShoppingItem("ALL"));
+                DataGridSellShoppingList.Items.Refresh();
             }
         }
     }
