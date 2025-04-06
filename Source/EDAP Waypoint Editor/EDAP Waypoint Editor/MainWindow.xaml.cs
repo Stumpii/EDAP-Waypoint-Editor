@@ -1,5 +1,6 @@
 ﻿using DR_Tools.Models;
 using EDAP_Waypoint_Editor.Models;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -262,7 +263,11 @@ namespace EDAP_Waypoint_Editor
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            LoadWaypointFile("C:\\Users\\shuttle\\OneDrive\\Programming\\Python\\EDAPGui - Stumpii-Main\\waypoints\\waypoints.json");
+            if (programSettings.LastOpenFilepath != "")
+            {
+                LoadWaypointFile(programSettings.LastOpenFilepath);
+            }
+            //LoadWaypointFile("C:\\Users\\shuttle\\OneDrive\\Programming\\Python\\EDAPGui - Stumpii-Main\\waypoints\\waypoints.json");
         }
 
         private void FavFoldersDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -270,6 +275,47 @@ namespace EDAP_Waypoint_Editor
             var wp = (InternalWaypoint)FavFoldersDataGrid.SelectedItem;
             DataGridBuyShoppingList.ItemsSource = wp.BuyCommodities;
             DataGridSellShoppingList.ItemsSource = wp.SellCommodities;
+        }
+
+        private void MenuFileExit(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+
+        private void MenuFileSave(object sender, RoutedEventArgs e)
+        {
+            if (programSettings.LastOpenFilepath != "")
+                SaveWaypointFile(programSettings.LastOpenFilepath);
+            else
+                MenuFileSaveAs(null, new RoutedEventArgs());
+        }
+
+        private void MenuFileOpen(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Json file (*.json)|*.json";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                LoadWaypointFile(openFileDialog.FileName);
+                programSettings.LastOpenFilepath = openFileDialog.FileName;
+            }
+        }
+
+        private void MenuFileNew(object sender, RoutedEventArgs e)
+        {
+            RawWaypoints = new Dictionary<string, Waypoint>();
+            Waypoints = new InternalWaypoints();
+        }
+
+        private void MenuFileSaveAs(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "Json file (*.json)|*.json";
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                SaveWaypointFile(saveFileDialog.FileName);
+                programSettings.LastOpenFilepath = saveFileDialog.FileName;
+            }
         }
     }
 }

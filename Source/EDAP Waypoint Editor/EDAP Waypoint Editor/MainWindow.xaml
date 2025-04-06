@@ -16,11 +16,12 @@
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="_New" />
-                <MenuItem Header="_Open" />
-                <MenuItem Header="_Save" />
+                <MenuItem Header="_New" Click="MenuFileNew" />
+                <MenuItem Header="_Open" Click="MenuFileOpen" />
+                <MenuItem Header="_Save" Click="MenuFileSave" />
+                <MenuItem Header="_Save As" Click="MenuFileSaveAs" />
                 <Separator />
-                <MenuItem Header="_Exit" />
+                <MenuItem Header="_Exit" Click="MenuFileExit" />
             </MenuItem>
         </Menu>
         <TabControl>
