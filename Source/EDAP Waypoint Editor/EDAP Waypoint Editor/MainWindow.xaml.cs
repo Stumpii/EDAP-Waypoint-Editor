@@ -29,6 +29,8 @@ namespace EDAP_Waypoint_Editor
 
         private List<string> GalaxyMapBookmarkTypesList = new List<string>() { "", "Favorite", "System", "Body", "Station", "Settlement" };
         private List<string> SystemMapBookmarkTypesList = new List<string>() { "", "Favorite", "Body", "Station", "Settlement", "Navigation Panel" };
+        private Dictionary<string, List<string>> commodities = new Dictionary<string, List<string>>();
+        public static List<string> AllCommodities = new List<string>();
 
         #endregion Fields
 
@@ -272,6 +274,32 @@ namespace EDAP_Waypoint_Editor
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            // Add some data to the dictionary
+            commodities["Chemicals"] = new List<string> { "Agronomic Treatment", "Explosives", "Hydrogen Fuel", "Hydrogen Peroxide", "Liquid Oxygen", "Mineral Oil", "Nerve Agents", "Pesticides", "Rockforth Fertiliser", "Surface Stabilisers", "Synthetic Reagents", "Tritium", "Water" };
+            commodities["Consumer Items"] = new List<string> { "Clothing", "Consumer Technology", "Domestic Appliances", "Evacuation Shelter", "Survival Equipment" };
+            commodities["Foods"] = new List<string> { "Algae", "Animal Meat", "Coffee", "Fish", "Food Cartridges", "Fruit and Vegetables", "Grain", "Synthetic Meat", "Tea" };
+            commodities["Industrial Materials"] = new List<string> { "Ceramic Composites", "CMM Composite", "Insulating Membrane", "Meta-Alloys", "Micro-Weave Cooling Hoses", "Neofabric Insulation", "Polymers", "Semiconductors", "Superconductors" };
+            commodities["Legal Drugs"] = new List<string> { "Beer", "Bootleg Liquor", "Liquor", "Narcotics", "Onionhead Gamma Strain", "Tobacco", "Wine" };
+            commodities["Machinery"] = new List<string> { "Articulation Motors", "Atmospheric Processors", "Building Fabricators", "Crop Harvesters", "Emergency Power Cells", "Energy Grid Assembly", "Exhaust Manifold", "Geological Equipment", "Heatsink Interlink", "HN Shock Mount", "Magnetic Emitter Coil", "Marine Equipment", "Microbial Furnaces", "Mineral Extractors", "Modular Terminals", "Power Converter", "Power Generators", "Power Transfer Bus", "Radiation Baffle", "Reinforced Mounting Plate", "Skimmer Components", "Thermal Cooling Units", "Water Purifiers" };
+            commodities["Medicines"] = new List<string> { "Advanced Medicines", "Agri-Medicines", "Basic Medicines", "Combat Stabilisers", "Performance Enhancers", "Progenitor Cells" };
+            commodities["Metals"] = new List<string> { "Aluminium", "Beryllium", "Bismuth", "Cobalt", "Copper", "Gallium", "Gold", "Hafnium 178", "Indium", "Lanthanum", "Lithium", "Osmium", "Palladium", "Platinum", "Platinum Alloy", "Praseodymium", "Samarium", "Silver", "Steel", "Tantalum", "Thallium", "Thorium", "Titanium", "Uranium" };
+            commodities["Minerals"] = new List<string> { "Alexandrite", "Bauxite", "Benitoite", "Bertrandite", "Bromellite", "Coltan", "Cryolite", "Gallite", "Goslarite", "Grandidierite", "Indite", "Jadeite", "Lepidolite", "Lithium Hydroxide", "Low Temperature Diamonds", "Methane Clathrate", "Methanol Monohydrate Crystals", "Moissanite", "Monazite", "Musgravite", "Painite", "Pyrophyllite", "Rhodplumsite", "Rutile", "Serendibite", "Taaffeite", "Uraninite", "Void Opals" };
+            commodities["Salvage"] = new List<string> { "AI Relics", "Ancient Artefact", "Ancient Key", "Anomaly Particles", "Antimatter Containment Unit", "Antique Jewellery", "Antiquities", "Assault Plans", "Black Box", "Commercial Samples", "Damaged Escape Pod", "Data Core", "Diplomatic Bag", "Earth Relics", "Encrypted Correspondence", "Encrypted Data Storage", "Experimental Chemicals", "Fossil Remnants", "Gene Bank", "Geological Samples", "Guardian Casket", "Guardian Orb", "Guardian Relic", "Guardian Tablet", "Guardian Totem", "Guardian Urn", "Hostage", "Large Survey Data Cache", "Military Intelligence", "Military Plans", "Mollusc Brain Tissue", "Mollusc Fluid", "Mollusc Membrane", "Mollusc Mycelium", "Mollusc Soft Tissue", "Mollusc Spores", "Mysterious Idol", "Occupied Escape Pod", "Personal Effects", "Pod Core Tissue", "Pod Dead Tissue", "Pod Mesoglea", "Pod Outer Tissue", "Pod Shell Tissue", "Pod Surface Tissue", "Pod Tissue", "Political Prisoner", "Precious Gems", "Prohibited Research Materials", "Prototype Tech", "Rare Artwork", "Rebel Transmissions", "SAP 8 Core Container", "Scientific Research", "Scientific Samples", "Small Survey Data Cache", "Space Pioneer Relics", "Tactical Data", "Technical Blueprints", "Thargoid Basilisk Tissue Sample", "Thargoid Biological Matter", "Thargoid Bio-Storage Capsule", "Thargoid Cyclops Tissue Sample", "Thargoid Glaive Tissue Sample", "Thargoid Heart", "Thargoid Hydra Tissue Sample", "Thargoid Link", "Thargoid Orthrus Tissue Sample", "Thargoid Probe", "Thargoid Resin", "Thargoid Sensor", "Thargoid Medusa Tissue Sample", "Thargoid Scout Tissue Sample", "Thargoid Technology Samples", "Time Capsule", "Titan Deep Tissue Sample", "Titan Maw Deep Tissue Sample", "Titan Maw Partial Tissue Sample", "Titan Maw Tissue Sample", "Titan Partial Tissue Sample", "Titan Tissue Sample", "Trade Data", "Trinkets of Hidden Fortune", "Unclassified Relic", "Unoccupied Escape Pod", "Unstable Data Core", "Wreckage Components" };
+            commodities["Slavery"] = new List<string> { "Imperial Slaves", "Slaves" };
+            commodities["Technology"] = new List<string> { "Advanced Catalysers", "Animal Monitors", "Aquaponic Systems", "Auto Fabricators", "Bioreducing Lichen", "Computer Components", "H.E. Suits", "Hardware Diagnostic Sensor", "Ion Distributor", "Land Enrichment Systems", "Medical Diagnostic Equipment", "Micro Controllers", "Muon Imager", "Nanobreakers", "Resonating Separators", "Robotics", "Structural Regulators", "Telemetry Suite" };
+            commodities["Textiles"] = new List<string> { "Conductive Fabrics", "Leather", "Military Grade Fabrics", "Natural Fabrics", "Synthetic Fabrics" };
+            commodities["Waste"] = new List<string> { "Biowaste", "Chemical Waste", "Scrap", "Toxic Waste" };
+            commodities["Weapons"] = new List<string> { "Battle Weapons", "Landmines", "Non Lethal Weapons", "Personal Weapons", "Reactive Armour" };
+
+            foreach (var commodity in commodities)
+            {
+                foreach (var item in commodity.Value)
+                {
+                    AllCommodities.Add(item);
+                }
+            }
+            AllCommodities.Sort();
+
             if (programSettings.LastOpenFilepath != "")
             {
                 LoadWaypointFile(programSettings.LastOpenFilepath);

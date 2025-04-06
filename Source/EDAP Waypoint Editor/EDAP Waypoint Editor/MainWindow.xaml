@@ -111,7 +111,19 @@
                                 <Models:InternaGlobalshoppinglist />
                             </DataGrid.DataContext>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Binding="{Binding Name}" Header="Name" IsReadOnly="False" />
+                                <DataGridTemplateColumn Header="Name">
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <ComboBox x:Name="ComboboxCommod2" IsEditable="True" IsTabStop="False"
+                                                     Text="{Binding Name}" ItemsSource="{Binding Source={x:Static local:MainWindow.AllCommodities}}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Binding="{Binding Quantity}" Header="Quantity" IsReadOnly="False" />
                             </DataGrid.Columns>
                         </DataGrid>
@@ -133,7 +145,19 @@
                                 <Models:InternaGlobalshoppinglist />
                             </DataGrid.DataContext>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Binding="{Binding Name}" Header="Name" IsReadOnly="False" />
+                                <DataGridTemplateColumn Header="Name">
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <ComboBox x:Name="ComboboxCommod2" IsEditable="True" IsTabStop="False"
+                                                     Text="{Binding Name}" ItemsSource="{Binding Source={x:Static local:MainWindow.AllCommodities}}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Binding="{Binding Quantity}" Header="Quantity" IsReadOnly="False" />
                             </DataGrid.Columns>
                         </DataGrid>
@@ -154,7 +178,7 @@
                         <RowDefinition Height="Auto" MinHeight="77" />
                         <RowDefinition />
                     </Grid.RowDefinitions>
-                    <Label Content="Buy Commodities" FontWeight="Bold" FontSize="14" Margin="5,5,5,5" />
+                    <Label Content="Buy Commodities" FontWeight="Bold" FontSize="14" Margin="5,5,475,5" />
                     <Grid x:Name="GridGlobalShopping" Grid.Row="1">
                         <CheckBox Content="Update Commodity Count" IsChecked="{Binding UpdateCommodityCount}" Margin="5,5,5,5" />
                     </Grid>
@@ -163,12 +187,24 @@
                             <ColumnDefinition />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <DataGrid x:Name="DataGridGlobalShoppingList" d:ItemsSource="{d:SampleData}" AutoGenerateColumns="False" GridLinesVisibility="None" IsTabStop="True" SelectionMode="Single" CanUserSortColumns="False">
+                        <DataGrid x:Name="DataGridGlobalShoppingList" d:ItemsSource="{d:SampleData}" AutoGenerateColumns="False" GridLinesVisibility="None" IsTabStop="True" SelectionMode="Single" CanUserSortColumns="False" RowHeight="22">
                             <DataGrid.DataContext>
                                 <Models:InternaGlobalshoppinglist />
                             </DataGrid.DataContext>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Binding="{Binding Name}" Header="Name" IsReadOnly="False" />
+                                <DataGridTemplateColumn Header="Name">
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <ComboBox x:Name="ComboboxCommod2" IsEditable="True" IsTabStop="False"
+                                                      Text="{Binding Name}" ItemsSource="{Binding Source={x:Static local:MainWindow.AllCommodities}}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Binding="{Binding Quantity}" Header="Quantity" IsReadOnly="False" />
                             </DataGrid.Columns>
                         </DataGrid>
