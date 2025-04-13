@@ -8,7 +8,7 @@
     x:Class="EDAP_Waypoint_Editor.MainWindow"
     Title="EDAP Waypoint Editor"
     Width="809"
-    Height="457"
+    Height="556"
     Closing="Window_Closing"
     Loaded="Window_Loaded"
     ResizeMode="CanResizeWithGrip"
@@ -36,14 +36,14 @@
                 Header="Waypoints">
                 <Grid Background="#FFE5E5E5">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="104*" />
-                        <RowDefinition Height="134*" />
-                        <RowDefinition Height="157*" />
+                        <RowDefinition Height="Auto" MinHeight="180" />
+                        <RowDefinition Height="115" />
+                        <RowDefinition Height="247.39" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <Grid>
+                    <Grid Margin="0,0,0,6">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="361*" />
                             <ColumnDefinition Width="41*" />
@@ -75,7 +75,7 @@
                             <Button x:Name="ButtonWaypointDel" Content="Del" Height="23" Width="52" Click="ButtonWaypointDel_Click" Margin="2,2,2,2" />
                         </StackPanel>
                     </Grid>
-                    <Grid  Grid.Row="1">
+                    <Grid Grid.Row="1">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -238,6 +238,27 @@
                             VerticalAlignment="Stretch"
                             Orientation="Vertical" />
                     </GroupBox>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="InaraTab" Header="Inara">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="310*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="437*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Name="multilineTextBox"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto"
+                 HorizontalScrollBarVisibility="Auto" Margin="10,10,10,10" Text="Paste Inara data here..." Grid.RowSpan="2" />
+                    <Button x:Name="buttonInaraAdd" Content="Add" HorizontalAlignment="Left" Margin="5,10,0,0" VerticalAlignment="Top" Click="buttonInaraAdd_Click" Grid.Column="1" Grid.RowSpan="2" />
+                    <Image Margin="10,15,10,130" Source="/Image1.png" Grid.Column="2" Grid.Row="1" />
+                    <Label Grid.Column="2" Content="Copy the text from the following portion:" Margin="0,0,0,338" Grid.RowSpan="2" />
                 </Grid>
             </TabItem>
         </TabControl>

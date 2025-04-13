@@ -5,8 +5,10 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -605,6 +607,78 @@ namespace EDAP_Waypoint_Editor
         private void ToolBarButtonSave_Click(object sender, RoutedEventArgs e)
         {
             MenuFileSave_Click(this, new RoutedEventArgs());
+        }
+
+        private void buttonInaraAdd_Click(object sender, RoutedEventArgs e)
+        {
+            var fromWaypoint = new InternalWaypoint();
+            var toWaypoint = new InternalWaypoint();
+
+            bool fromBuy = true;
+            bool fromSell = true;
+            for (int i = 0; i < multilineTextBox.LineCount - 1; i++)
+            {
+                string line = multilineTextBox.GetLineText(i);
+                if (line != null)
+                {
+                    if (line.StartsWith("From"))
+                    {
+                        string detailLine = line.Replace("From", "");
+                        var fromData = detailLine.Split('|');
+                        var station = fromData[0].Trim();
+                        var system = fromData[1].Trim();
+
+                        // Strip out non-ASCII chars
+                        station = Regex.Replace(station, @"[^\u0000-\u007F]+", string.Empty);
+                        system = Regex.Replace(system, @"[^\u0000-\u007F]+", string.Empty);
+
+                        fromWaypoint.SystemName = system;
+                        fromWaypoint.StationName = station;
+                    }
+                    else if (line.StartsWith("To"))
+                    {
+                        string detailLine = line.Replace("To", "");
+                        var toData = detailLine.Split('|');
+                        var station = toData[0].Trim();
+                        var system = toData[1].Trim();
+
+                        // Strip out non-ASCII chars
+                        station = Regex.Replace(station, @"[^\u0000-\u007F]+", string.Empty);
+                        system = Regex.Replace(system, @"[^\u0000-\u007F]+", string.Empty);
+
+                        toWaypoint.SystemName = system;
+                        toWaypoint.StationName = station;
+                    }
+                    else if (line.StartsWith("Buy") && !line.StartsWith("Buy price"))
+                    {
+                        string detailLine = line.Replace("Buy", "").Trim();
+
+                        if (fromBuy)
+                            fromWaypoint.BuyCommodities.Add(new ShoppingItem(detailLine, 9999));
+                        else
+                            toWaypoint.BuyCommodities.Add(new ShoppingItem(detailLine, 9999));
+
+                        fromBuy = false;
+                    }
+                    else if (line.StartsWith("Sell") && !line.StartsWith("Sell price"))
+                    {
+                        string detailLine = line.Replace("Sell", "").Trim();
+
+                        if (fromSell)
+                            fromWaypoint.SellCommodities.Add(new ShoppingItem(detailLine, 9999));
+                        else
+                            toWaypoint.SellCommodities.Add(new ShoppingItem(detailLine, 9999));
+
+                        fromSell = false;
+                    }
+                }
+            }
+
+            Waypoints.Waypoints.Add(fromWaypoint);
+            Waypoints.Waypoints.Add(toWaypoint);
+            DataGridWaypoints.Items.Refresh();
+
+            MessageBox.Show("Finished.\nRemember to add bookmark data for the stations!", ProductName, MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }

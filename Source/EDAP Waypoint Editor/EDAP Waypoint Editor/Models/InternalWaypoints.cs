@@ -64,6 +64,12 @@ namespace EDAP_Waypoint_Editor.Models
             this.Name = Name;
         }
 
+        public ShoppingItem(string Name, int Quantity)
+        {
+            this.Name = Name;
+            this.Quantity = Quantity;
+        }
+
         public string Name { get; set; }
         public int Quantity { get; set; }
     }
