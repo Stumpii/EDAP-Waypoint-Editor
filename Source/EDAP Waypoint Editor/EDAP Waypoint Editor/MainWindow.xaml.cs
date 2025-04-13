@@ -331,7 +331,7 @@ namespace EDAP_Waypoint_Editor
             this.Close();
         }
 
-        private void MenuFileSave(object sender, RoutedEventArgs e)
+        private void MenuFileSave_Click(object sender, RoutedEventArgs e)
         {
             if (programSettings.LastOpenFilepath != "")
                 SaveWaypointFile(programSettings.LastOpenFilepath);
@@ -339,7 +339,7 @@ namespace EDAP_Waypoint_Editor
                 MenuFileSaveAs(null, new RoutedEventArgs());
         }
 
-        private void MenuFileOpen(object sender, RoutedEventArgs e)
+        private void MenuFileOpen_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Json file (*.json)|*.json";
@@ -350,7 +350,7 @@ namespace EDAP_Waypoint_Editor
             }
         }
 
-        private void MenuFileNew(object sender, RoutedEventArgs e)
+        private void MenuFileNew_Click(object sender, RoutedEventArgs e)
         {
             RawWaypoints = new Dictionary<string, Waypoint>();
             Waypoints = new InternalWaypoints();
@@ -590,6 +590,21 @@ namespace EDAP_Waypoint_Editor
                 wp.SellCommodities.Add(new ShoppingItem("ALL"));
                 DataGridSellShoppingList.Items.Refresh();
             }
+        }
+
+        private void ToolBarButtonNew_Click(object sender, RoutedEventArgs e)
+        {
+            MenuFileNew_Click(this, new RoutedEventArgs());
+        }
+
+        private void ToolBarButtonOpen_Click(object sender, RoutedEventArgs e)
+        {
+            MenuFileOpen_Click(this, new RoutedEventArgs());
+        }
+
+        private void ToolBarButtonSave_Click(object sender, RoutedEventArgs e)
+        {
+            MenuFileSave_Click(this, new RoutedEventArgs());
         }
     }
 }

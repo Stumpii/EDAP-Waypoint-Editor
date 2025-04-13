@@ -16,14 +16,21 @@
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="_New" Click="MenuFileNew" />
-                <MenuItem Header="_Open" Click="MenuFileOpen" />
-                <MenuItem Header="_Save" Click="MenuFileSave" />
+                <MenuItem Header="_New" Click="MenuFileNew_Click" />
+                <MenuItem Header="_Open" Click="MenuFileOpen_Click" />
+                <MenuItem Header="_Save" Click="MenuFileSave_Click" />
                 <MenuItem Header="_Save As" Click="MenuFileSaveAs" />
                 <Separator />
                 <MenuItem Header="_Exit" Click="MenuFileExit" />
             </MenuItem>
         </Menu>
+        <ToolBarTray DockPanel.Dock="Top">
+            <ToolBar>
+                <Button x:Name="ToolBarButtonNew" Content="New" Click="ToolBarButtonNew_Click" />
+                <Button x:Name="ToolBarButtonOpen" Content="Open" Click="ToolBarButtonOpen_Click" />
+                <Button x:Name="ToolBarButtonSave" Content="Save" Click="ToolBarButtonSave_Click" />
+            </ToolBar>
+        </ToolBarTray>
         <TabControl>
             <TabItem                 x:Name="FavoritesTab"
                 Header="Waypoints">
@@ -68,13 +75,15 @@
                             <Button x:Name="ButtonWaypointDel" Content="Del" Height="23" Width="52" Click="ButtonWaypointDel_Click" Margin="2,2,2,2" />
                         </StackPanel>
                     </Grid>
-                    <Grid Margin="0,3,0,28" Grid.Row="1">
+                    <Grid  Grid.Row="1">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <Label Content="Waypoint Options" FontWeight="Bold" FontSize="14" />
-                        <Grid x:Name="Griditems" Margin="0,17,0,0" Grid.Row="1">
+                        <Label Content="Station Options" FontWeight="Bold" Grid.Row="1" />
+                        <Grid x:Name="Griditems" Grid.Row="2">
                             <Label Content="Galaxy Bookmark Type:" HorizontalAlignment="Left" VerticalAlignment="Top" />
                             <Label Content="System Bookmark Type:" HorizontalAlignment="Left" Margin="0,26,0,0" VerticalAlignment="Top" />
                             <Label Content="Galaxy Bookmark Number:" HorizontalAlignment="Left" Margin="313,0,0,0" VerticalAlignment="Top" />
