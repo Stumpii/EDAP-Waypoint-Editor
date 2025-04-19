@@ -8,7 +8,7 @@
     x:Class="EDAP_Waypoint_Editor.MainWindow"
     Title="EDAP Waypoint Editor"
     Width="809"
-    Height="556"
+    Height="569"
     Closing="Window_Closing"
     Loaded="Window_Loaded"
     ResizeMode="CanResizeWithGrip"
@@ -38,7 +38,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" MinHeight="180" />
                         <RowDefinition Height="115" />
-                        <RowDefinition Height="247.39" />
+                        <RowDefinition />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
