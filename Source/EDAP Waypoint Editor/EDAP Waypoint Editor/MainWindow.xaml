@@ -87,13 +87,13 @@
                             <Label Content="Galaxy Bookmark Type:" HorizontalAlignment="Left" VerticalAlignment="Top" />
                             <Label Content="System Bookmark Type:" HorizontalAlignment="Left" Margin="0,26,0,0" VerticalAlignment="Top" />
                             <Label Content="Galaxy Bookmark Number:" HorizontalAlignment="Left" Margin="313,0,0,0" VerticalAlignment="Top" />
-                            <TextBox HorizontalAlignment="Left" Margin="471,4,0,0" TextWrapping="Wrap" Text="{Binding GalaxyBookmarkNumber}" VerticalAlignment="Top" Width="59" />
+                            <TextBox HorizontalAlignment="Left" Margin="471,4,0,0" TextWrapping="Wrap" Text="{Binding GalaxyBookmarkNumber}" VerticalAlignment="Top" Width="59" IsEnabled="{Binding StationDefined}" />
                             <Label Content="System Bookmark Number:" HorizontalAlignment="Left" Margin="313,26,0,0" VerticalAlignment="Top" />
-                            <TextBox HorizontalAlignment="Left" Margin="471,30,0,0" TextWrapping="Wrap" Text="{Binding SystemBookmarkNumber}" VerticalAlignment="Top" Width="59" />
-                            <CheckBox Content="Update Commodity Count" IsChecked="{Binding UpdateCommodityCount}" Margin="573,3,24,29" />
-                            <CheckBox Content="Fleet Carrier Transfer" IsChecked="{Binding FleetCarrierTransfer}" Margin="573,29,40,3" />
-                            <ComboBox x:Name="ComboGalaxyBookmarkType" HorizontalAlignment="Left" Margin="137,4,0,0" VerticalAlignment="Top" Width="115" Text="{Binding GalaxyBookmarkType}" />
-                            <ComboBox x:Name="ComboSystemBookmarkType" HorizontalAlignment="Left" Margin="137,31,0,0" VerticalAlignment="Top" Width="115" Text="{Binding SystemBookmarkType}" />
+                            <TextBox HorizontalAlignment="Left" Margin="471,30,0,0" TextWrapping="Wrap" Text="{Binding SystemBookmarkNumber}" VerticalAlignment="Top" Width="59" IsEnabled="{Binding StationDefined}" />
+                            <CheckBox Content="Update Commodity Count" IsChecked="{Binding UpdateCommodityCount}" Margin="573,3,24,29" IsEnabled="{Binding StationDefined}" />
+                            <CheckBox Content="Fleet Carrier Transfer" IsChecked="{Binding FleetCarrierTransfer}" Margin="573,29,40,3" IsEnabled="{Binding StationDefined}" />
+                            <ComboBox x:Name="ComboGalaxyBookmarkType" HorizontalAlignment="Left" Margin="137,4,0,0" VerticalAlignment="Top" Width="115" Text="{Binding GalaxyBookmarkType}" IsEnabled="{Binding StationDefined}" />
+                            <ComboBox x:Name="ComboSystemBookmarkType" HorizontalAlignment="Left" Margin="137,31,0,0" VerticalAlignment="Top" Width="115" Text="{Binding SystemBookmarkType}" IsEnabled="{Binding StationDefined}" />
                         </Grid>
                     </Grid>
                     <Grid Margin="0,5,0,5" Grid.Row="2">

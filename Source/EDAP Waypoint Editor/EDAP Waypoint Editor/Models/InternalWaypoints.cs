@@ -51,6 +51,9 @@ namespace EDAP_Waypoint_Editor.Models
         public bool FleetCarrierTransfer { get; set; }
         public bool Skip { get; set; }
         public bool Completed { get; set; }
+
+        public bool StationDefined
+        { get { return StationName != ""; } }
     }
 
     public class ShoppingItem
