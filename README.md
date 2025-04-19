@@ -1,2 +1,2 @@
 An editor for ED_AP waypoints file.
-![Alt text](images/EDAP Waypoints Editor.jpg?raw=true)
+![Alt text](images/image.jpg?raw=true)
