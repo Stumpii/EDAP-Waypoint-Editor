@@ -1,5 +1,6 @@
 ﻿using DR_Tools.Models;
 using EDAP_Waypoint_Editor.Models;
+using HtmlAgilityPack;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
@@ -8,11 +9,13 @@ using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Navigation;
 
@@ -309,6 +312,8 @@ namespace EDAP_Waypoint_Editor
             // Load default combos, etc/
             ComboGalaxyBookmarkType.ItemsSource = GalaxyMapBookmarkTypesList;
             ComboSystemBookmarkType.ItemsSource = SystemMapBookmarkTypesList;
+
+            DataGridConstructionSites.ItemsSource = programSettings.ConstructionSites;
         }
 
         private void FavFoldersDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -616,9 +621,9 @@ namespace EDAP_Waypoint_Editor
 
             bool fromBuy = true;
             bool fromSell = true;
-            for (int i = 0; i < multilineTextBox.LineCount - 1; i++)
+            for (int i = 0; i < TextBoxInaraData.LineCount - 1; i++)
             {
-                string line = multilineTextBox.GetLineText(i);
+                string line = TextBoxInaraData.GetLineText(i);
                 if (line != null)
                 {
                     if (line.StartsWith("From"))
@@ -679,6 +684,120 @@ namespace EDAP_Waypoint_Editor
             DataGridWaypoints.Items.Refresh();
 
             MessageBox.Show("Finished.\nRemember to add bookmark data for the stations!", ProductName, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private List<ConstructionCommodity> ConstructionCommodities;
+
+        private void ButtonConstructionFetch_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridConstructionSites.SelectedItem is ConstructionSite)
+            {
+                var item = (ConstructionSite)DataGridConstructionSites.SelectedItem;
+
+                //var html = @"https://inara.cz/elite/station-depot/797775/";
+                var html = item.Path;
+
+                HtmlWeb web = new HtmlWeb();
+
+                var htmlDoc = web.Load(html);
+
+                var table = htmlDoc.DocumentNode.SelectSingleNode("/html[1]/body[1]/div[3]/div[3]/div[4]/table[1]");
+                if (table != null)
+                {
+                    var hdr = table.Descendants("th")
+                        .Select(td => WebUtility.HtmlDecode(td.InnerText))
+                        .ToList();
+
+                    var tbl = table.Descendants("tr")
+                    //.Skip(2)
+                    .Select(tr => tr.Descendants("td")
+                    .Select(td => WebUtility.HtmlDecode(td.InnerText))
+                    .ToList())
+                    .ToList();
+
+                    ConstructionCommodities = new List<ConstructionCommodity>();
+
+                    foreach (var tr in tbl)
+                    {
+                        string resource = tr[0].Trim();
+                        double.TryParse(tr[1].Replace("%", "").Trim(), out double progress);
+                        int.TryParse(tr[2].Replace(",", "").Trim(), out int required);
+                        int.TryParse(tr[3].Replace(",", "").Trim(), out int delivered);
+                        int.TryParse(tr[4].Replace(",", "").Trim(), out int remaining);
+                        int.TryParse(tr[5].Replace(",", "").Replace("Cr", "").Trim(), out int value);
+
+                        ConstructionCommodities.Add(new ConstructionCommodity()
+                        {
+                            Resource = resource,
+                            Progress = progress,
+                            Required = required,
+                            Delivered = delivered,
+                            Remaining = remaining,
+                            Value = value
+                        });
+                    }
+
+                    DataGridConstructionCommodities.ItemsSource = ConstructionCommodities;
+                }
+            }
+        }
+
+        private void ButtonGlobalBuyDelAll_Click(object sender, RoutedEventArgs e)
+        {
+            Waypoints.globalshoppinglist.BuyCommodities.Clear();
+            DataGridGlobalShoppingList.Items.Refresh();
+        }
+
+        private void ButtonConstructionAdd_Click(object sender, RoutedEventArgs e)
+        {
+            // Sort based on value
+            ConstructionCommodities.Sort((a, b) => a.Value.CompareTo(b.Value));
+            ConstructionCommodities.Reverse();
+
+            foreach (var progItem in ConstructionCommodities)
+            {
+                if (progItem.Remaining > 0)
+                {
+                    // Check if item exists already
+                    bool found = false;
+                    foreach (var item2 in Waypoints.globalshoppinglist.BuyCommodities)
+                    {
+                        // Check if item exists
+                        if (item2.Name.ToUpper() == progItem.Resource.ToUpper())
+                        {
+                            // Add count
+                            item2.Quantity = item2.Quantity + progItem.Remaining;
+                            found = true;
+                        }
+                    }
+
+                    // Add item if not found
+                    if (!found)
+                        Waypoints.globalshoppinglist.BuyCommodities.Add(new ShoppingItem(progItem.Resource, progItem.Remaining));
+                }
+            }
+
+            DataGridGlobalShoppingList.Items.Refresh();
+
+            MessageBox.Show("Finished.", ProductName, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void ButtonBestTradeFetch_Click(object sender, RoutedEventArgs e)
+        {
+            var html = @"https://inara.cz/elite/market-traderoutes/?ps1=Dhan&pi10=720&pi2=40&pi5=72&pi3=3&pi9=10000&pi4=1&pi14=2&pi15=2&pi7=2500&pi12=0&pi1=4&pi11=1&pi8=1";
+
+            HtmlWeb web = new HtmlWeb();
+
+            var htmlDoc = web.Load(html);
+
+            var traderoutebox = htmlDoc.DocumentNode.SelectSingleNode("//div[@class='mainblock traderoutebox']");
+
+            var tbl = traderoutebox.Descendants("div")
+            //.Skip(2)
+            .Select(tr => tr.Descendants("td")
+            .Select(td => WebUtility.HtmlDecode(td.InnerText))
+            .ToList())
+            .ToList();
         }
     }
 }

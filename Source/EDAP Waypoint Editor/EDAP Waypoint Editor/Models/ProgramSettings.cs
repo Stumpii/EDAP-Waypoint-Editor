@@ -2,6 +2,7 @@
 using PropertyChanged;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Runtime.Serialization;
 using System.Windows;
 
 namespace EDAP_Waypoint_Editor
@@ -21,6 +22,15 @@ namespace EDAP_Waypoint_Editor
 
         public string LastOpenFilepath { get; set; }
 
+        public List<ConstructionSite> ConstructionSites { get; set; } = new List<ConstructionSite>();
+
         #endregion Properties
+
+        [OnDeserialized()]
+        internal void OnDeserializedMethod(StreamingContext context)
+        {
+            if (ConstructionSites is null)
+                this.ConstructionSites = new List<ConstructionSite>();
+        }
     }
 }

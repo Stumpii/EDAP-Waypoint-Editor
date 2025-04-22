@@ -7,8 +7,8 @@
     xmlns:Models="clr-namespace:EDAP_Waypoint_Editor.Models"
     x:Class="EDAP_Waypoint_Editor.MainWindow"
     Title="EDAP Waypoint Editor"
-    Width="809"
-    Height="569"
+    Width="818"
+    Height="568"
     Closing="Window_Closing"
     Loaded="Window_Loaded"
     ResizeMode="CanResizeWithGrip"
@@ -222,6 +222,7 @@
                             <Button x:Name="ButtonGlobalBuyDown" Content="Down" Height="23" Width="52" Click="ButtonGlobalBuyDown_Click" Margin="2,2,2,2" />
                             <Button x:Name="ButtonGlobalBuyAdd" Content="Add" Height="23" Width="52" Click="ButtonGlobalBuyAdd_Click" Margin="2,2,2,2" />
                             <Button x:Name="ButtonGlobalBuyDel" Content="Del" Height="23" Width="52" Click="ButtonGlobalBuyDel_Click" Margin="2,2,2,2" />
+                            <Button x:Name="ButtonGlobalBuyDelAll" Content="Del All" Height="23" Width="52" Click="ButtonGlobalBuyDelAll_Click" Margin="2,2,2,2" />
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -251,14 +252,58 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="437*" />
                     </Grid.ColumnDefinitions>
-                    <TextBox Name="multilineTextBox"
+                    <TextBox Name="TextBoxInaraData"
                  AcceptsReturn="True"
                  TextWrapping="Wrap"
                  VerticalScrollBarVisibility="Auto"
-                 HorizontalScrollBarVisibility="Auto" Margin="10,10,10,10" Text="Paste Inara data here..." Grid.RowSpan="2" />
-                    <Button x:Name="buttonInaraAdd" Content="Add" HorizontalAlignment="Left" Margin="5,10,0,0" VerticalAlignment="Top" Click="buttonInaraAdd_Click" Grid.Column="1" Grid.RowSpan="2" />
+                 HorizontalScrollBarVisibility="Auto" Margin="5,5,5,5" Text="Paste Inara data here..." Grid.RowSpan="2" />
+                    <Button x:Name="buttonInaraAdd" Content="Add" Margin="5,10,5,0" VerticalAlignment="Top" Click="buttonInaraAdd_Click" Grid.Column="1" Grid.RowSpan="2" Height="30" Width="45" />
                     <Image Margin="10,15,10,130" Source="/Image1.png" Grid.Column="2" Grid.Row="1" />
                     <Label Grid.Column="2" Content="Copy the text from the following portion:" Margin="0,0,0,338" Grid.RowSpan="2" />
+                    <Button x:Name="ButtonBestTradeFetch" Content="Fetch Data" HorizontalAlignment="Center" Height="30" VerticalAlignment="Top" Width="73" Margin="0,52,0,0" Grid.Column="1" Grid.Row="1" Click="ButtonBestTradeFetch_Click" />
+                </Grid>
+            </TabItem>
+            <TabItem Header="Construction">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="136*" />
+                        <RowDefinition Height="351*" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button Content="Fetch Data" HorizontalAlignment="Left" Height="30" VerticalAlignment="Top" Width="73" Click="ButtonConstructionFetch_Click" Margin="3,3,3,3" Grid.Column="1" />
+                    <DataGrid x:Name="DataGridConstructionSites" d:ItemsSource="{d:SampleData}" AutoGenerateColumns="False" GridLinesVisibility="None" IsTabStop="True" SelectionMode="Single" CanUserSortColumns="False" RowHeight="22" Margin="3,3,3,3">
+                        <DataGrid.DataContext>
+                            <local:ConstructionSite />
+                        </DataGrid.DataContext>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Binding="{Binding System}" Header="System" IsReadOnly="False" />
+                            <DataGridTextColumn Binding="{Binding Name}" Header="Name" IsReadOnly="False" />
+                            <DataGridHyperlinkColumn Binding="{Binding Path}" Header="Path" IsReadOnly="False" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <DataGrid x:Name="DataGridConstructionCommodities" d:ItemsSource="{d:SampleData}" GridLinesVisibility="None" IsTabStop="True" SelectionMode="Single" CanUserSortColumns="False" RowHeight="22" IsReadOnly="True" AutoGenerateColumns="False" Grid.Row="1" Margin="3,3,3,3">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Binding="{Binding Resource}" Header="Resource" IsReadOnly="False" />
+                            <DataGridTemplateColumn Header="Progress">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100" />
+                                            <TextBlock Text="{Binding Progress, StringFormat={}{0:0}%}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Binding="{Binding Required}" Header="Required" IsReadOnly="False" />
+                            <DataGridTextColumn Binding="{Binding Delivered}" Header="Delivered" IsReadOnly="False" />
+                            <DataGridTextColumn Binding="{Binding Remaining}" Header="Remaining" IsReadOnly="False" />
+                            <DataGridTextColumn Binding="{Binding Value}" Header="Value" IsReadOnly="False" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <Button x:Name="ButtonConstructionAdd" Content="Add to Shopping List" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="3,3,3,3" Grid.Column="1" Grid.Row="1" Height="30" Width="139" Click="ButtonConstructionAdd_Click" />
                 </Grid>
             </TabItem>
         </TabControl>
