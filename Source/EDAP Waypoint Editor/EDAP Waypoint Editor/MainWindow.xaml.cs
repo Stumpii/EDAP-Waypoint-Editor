@@ -10,6 +10,8 @@ using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows;
@@ -18,6 +20,12 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Navigation;
+
+using System;
+
+using NetMQ;
+using NetMQ.Sockets;
+using System.Windows.Interop;
 
 namespace EDAP_Waypoint_Editor
 {
@@ -314,6 +322,11 @@ namespace EDAP_Waypoint_Editor
             ComboSystemBookmarkType.ItemsSource = SystemMapBookmarkTypesList;
 
             DataGridConstructionSites.ItemsSource = programSettings.ConstructionSites;
+
+            // Create a new thread for the subscriber
+            Thread subscriberThread = new Thread(SubscriberTask);
+            subscriberThread.IsBackground = true;
+            subscriberThread.Start();
         }
 
         private void FavFoldersDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -798,6 +811,86 @@ namespace EDAP_Waypoint_Editor
             .Select(td => WebUtility.HtmlDecode(td.InnerText))
             .ToList())
             .ToList();
+        }
+
+        private const int SEND_PORT_NO = 15560;
+        private const int RECEIVE_PORT_NO = 15561;
+
+        private void ToolBarButtonUndock_Click(object sender, RoutedEventArgs e)
+        {
+            EDMesgEnvelope msg = new EDMesgEnvelope("UndockAction", new Dictionary<string, string>());
+            SendMesgToEDAP(msg);
+        }
+
+        private void SubscriberTask()
+        {
+            var topic = "";
+            using (var subSocket = new SubscriberSocket())
+            {
+                subSocket.Options.ReceiveHighWatermark = 1000;
+                subSocket.Connect($"tcp://localhost:{RECEIVE_PORT_NO}");
+                subSocket.Subscribe(topic);
+                Console.WriteLine("Subscriber socket connecting...");
+                while (true)
+                {
+                    byte[] workload = subSocket.ReceiveFrameBytes();
+
+                    string messageTopicReceived = UTF8Encoding.UTF8.GetString(workload);
+                    EDMesgEnvelope msgRec = JsonConvert.DeserializeObject<EDMesgEnvelope>(messageTopicReceived);
+
+                    if (msgRec.type == "UndockCompleteEvent")
+                    { }
+                    else if (msgRec.type == "SpeakingPhraseEvent")
+                    { }
+
+                    //string messageTopicReceived = subSocket.ReceiveFrameString();
+                    Console.WriteLine(msgRec.type);
+                }
+            }
+        }
+
+        private void ToolBarButtonStopAllAssists_Click(object sender, RoutedEventArgs e)
+        {
+            EDMesgEnvelope msg = new EDMesgEnvelope("StopAllAssistsAction", new Dictionary<string, string>());
+            SendMesgToEDAP(msg);
+        }
+
+        private void ToolBarButtonStartWaypointAssist_Click(object sender, RoutedEventArgs e)
+        {
+            EDMesgEnvelope msg = new EDMesgEnvelope("StartWaypointAssistAction", new Dictionary<string, string>());
+            SendMesgToEDAP(msg);
+        }
+
+        private void ToolBarButtonLoadWaypointFile_Click(object sender, RoutedEventArgs e)
+        {
+            EDMesgEnvelope msg = new EDMesgEnvelope("LoadWaypointFileAction", new Dictionary<string, string>
+                {
+                    { "filepath", programSettings.LastOpenFilepath }
+                });
+            SendMesgToEDAP(msg);
+        }
+
+        /// <summary>
+        /// Send an Action to EDAP
+        /// </summary>
+        /// <param name="msg">The action message to send.</param>
+        private void SendMesgToEDAP(EDMesgEnvelope msg)
+        {
+            if (msg is null)
+                return;
+
+            using (var client1 = new PushSocket($"tcp://localhost:{SEND_PORT_NO}"))
+            {
+                // Wait a little for the socket
+                Thread.Sleep(50);
+
+                string serMsg = msg.GetJSon();
+
+                Console.WriteLine($"Sending {serMsg}" + Environment.NewLine);
+
+                byte[] bytesToSend1 = UTF8Encoding.UTF8.GetBytes(serMsg);
+                client1.SendFrame(bytesToSend1);
+            }
         }
     }
 }

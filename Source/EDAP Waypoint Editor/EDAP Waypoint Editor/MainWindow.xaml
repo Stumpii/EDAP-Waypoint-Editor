@@ -30,6 +30,12 @@
                 <Button x:Name="ToolBarButtonOpen" Content="Open" Click="ToolBarButtonOpen_Click" />
                 <Button x:Name="ToolBarButtonSave" Content="Save" Click="ToolBarButtonSave_Click" />
             </ToolBar>
+            <ToolBar>
+                <Button x:Name="ToolBarButtonUndock" Content="Undock" Click="ToolBarButtonUndock_Click" />
+                <Button x:Name="ToolBarButtonStopAllAssists" Content="Stop All Assists" Click="ToolBarButtonStopAllAssists_Click" />
+                <Button x:Name="ToolBarButtonStartWaypointAssist" Content="Start Waypoint Assist" Click="ToolBarButtonStartWaypointAssist_Click" />
+                <Button x:Name="ToolBarButtonLoadWaypointFile" Content="Load Waypoint File" Click="ToolBarButtonLoadWaypointFile_Click" />
+            </ToolBar>
         </ToolBarTray>
         <TabControl>
             <TabItem                 x:Name="FavoritesTab"
