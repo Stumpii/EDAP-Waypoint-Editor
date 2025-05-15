@@ -813,8 +813,8 @@ namespace EDAP_Waypoint_Editor
             .ToList();
         }
 
-        private const int SEND_PORT_NO = 15560;
-        private const int RECEIVE_PORT_NO = 15561;
+        private const int SEND_PORT_NO = 15570;
+        private const int RECEIVE_PORT_NO = 15571;
 
         private void ToolBarButtonUndock_Click(object sender, RoutedEventArgs e)
         {
