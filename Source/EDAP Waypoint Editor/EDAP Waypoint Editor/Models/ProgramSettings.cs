@@ -21,6 +21,10 @@ namespace EDAP_Waypoint_Editor
         public double MainFormY { get; set; } = 100;
 
         public string LastOpenFilepath { get; set; }
+        public string Note1 { get; set; }
+        public string Note2 { get; set; }
+        public string Note3 { get; set; }
+        public string Note4 { get; set; }
 
         public List<ConstructionSite> ConstructionSites { get; set; } = new List<ConstructionSite>();
 

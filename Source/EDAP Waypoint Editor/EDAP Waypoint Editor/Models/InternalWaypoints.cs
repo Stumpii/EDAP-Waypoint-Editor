@@ -51,11 +51,15 @@ namespace EDAP_Waypoint_Editor.Models
         public bool FleetCarrierTransfer { get; set; }
         public bool Skip { get; set; }
         public bool Completed { get; set; }
+        public string Comment { get; set; }
+        public bool IsFleetCarrier { get; set; }
+        public bool IsColonisation { get; set; }
 
         public bool StationDefined
         { get { return StationName != ""; } }
     }
 
+    [AddINotifyPropertyChangedInterface]
     public class ShoppingItem
     {
         public ShoppingItem()
@@ -75,5 +79,20 @@ namespace EDAP_Waypoint_Editor.Models
 
         public string Name { get; set; }
         public int Quantity { get; set; }
+
+        public string Add
+        {
+            get
+            {
+                return "";
+            }
+            set
+            {
+                if (int.TryParse(value, out int qty))
+                {
+                    Quantity += qty;
+                }
+            }
+        }
     }
 }

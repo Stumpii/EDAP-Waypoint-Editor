@@ -133,8 +133,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\ConstructionSite.cs" />
-    <Compile Include="Models\EDMesg.cs" />
+    <Compile Include="EDMesg\EDAP_EDMesgBase.cs" />
+    <Compile Include="EDMesg\EDAP_EDMesg_Client.cs" />
     <Compile Include="Models\FavFolderModel.cs" />
+    <Compile Include="Models\ObjectExtensions.cs" />
     <Compile Include="Models\ProgramSettings.cs" />
     <Compile Include="Models\InternalWaypoints.cs" />
     <Compile Include="Models\WaypointsFile.cs" />

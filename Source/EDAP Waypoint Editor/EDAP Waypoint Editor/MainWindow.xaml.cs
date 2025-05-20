@@ -36,14 +36,15 @@ namespace EDAP_Waypoint_Editor
     {
         #region Fields
 
+        public static List<string> AllCommodities = new List<string>();
         private const string ProductName = "EDAP Waypoint Editor";
 
-        private ProgramSettings programSettings = new ProgramSettings();
-
-        private List<string> GalaxyMapBookmarkTypesList = new List<string>() { "", "Favorite", "System", "Body", "Station", "Settlement" };
-        private List<string> SystemMapBookmarkTypesList = new List<string>() { "", "Favorite", "Body", "Station", "Settlement", "Navigation Panel" };
         private Dictionary<string, List<string>> commodities = new Dictionary<string, List<string>>();
-        public static List<string> AllCommodities = new List<string>();
+        private List<ConstructionCommodity> ConstructionCommodities;
+        private EDAP_EDMesg_Client eDAP_EDMesg_Client = new EDAP_EDMesg_Client();
+        private List<string> GalaxyMapBookmarkTypesList = new List<string>() { "", "Favorite", "System", "Body", "Station", "Settlement" };
+        private ProgramSettings programSettings = new ProgramSettings();
+        private List<string> SystemMapBookmarkTypesList = new List<string>() { "", "Favorite", "Body", "Station", "Settlement", "Navigation Panel" };
 
         #endregion Fields
 
@@ -55,6 +56,10 @@ namespace EDAP_Waypoint_Editor
 
             // Load settings
             SettingsLoad();
+
+            eDAP_EDMesg_Client.EDAPLocationEvent_Received += EDAP_EDMesg_Client_EDAPLocation_Received;
+            eDAP_EDMesg_Client.SpeakingPhraseEvent_Received += EDAP_EDMesg_Client_SpeakingPhrase_Received;
+            eDAP_EDMesg_Client.LaunchCompleteEvent_Received += EDAP_EDMesg_Client_LaunchComplete_Received;
         }
 
         #endregion Constructors
@@ -69,45 +74,6 @@ namespace EDAP_Waypoint_Editor
         #endregion Properties
 
         #region Methods
-
-        private void Serializer_Error(object sender, Newtonsoft.Json.Serialization.ErrorEventArgs e)
-        {
-            Debug.WriteLine(e.ErrorContext.Error.Message);
-            MessageBox.Show("Serializer_Error.", ProductName, MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void SettingsLoad()
-        {
-            try
-            {
-                string AppDataFolder = Path.Combine(Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), ProductName);
-                if (!Directory.Exists(AppDataFolder))
-                    Directory.CreateDirectory(AppDataFolder);
-
-                // deserialize JSON directly from a file
-                string settingsFilename = Path.Combine(AppDataFolder, "Program Settings.json");
-                if (File.Exists(settingsFilename))
-                {
-                    using (StreamReader file = File.OpenText(settingsFilename))
-                    {
-                        JsonSerializer serializer = new JsonSerializer();
-                        serializer.Error += Serializer_Error;
-                        programSettings = (ProgramSettings)serializer.Deserialize(file, typeof(ProgramSettings));
-
-                        this.Left = programSettings.MainFormX;
-                        this.Top = programSettings.MainFormY;
-                        this.Width = programSettings.MainFormWidth;
-                        this.Height = programSettings.MainFormHeight;
-
-                        this.DataContext = programSettings;
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                //throw;
-            }
-        }
 
         public bool LoadWaypointFile(string filepath)
         {
@@ -147,6 +113,7 @@ namespace EDAP_Waypoint_Editor
                         {
                             InternalWaypoint waypoint = new InternalWaypoint();
                             waypoint.Name = item.Key;
+                            waypoint.Comment = item.Value.Comment;
                             waypoint.SystemName = item.Value.SystemName;
                             waypoint.GalaxyBookmarkType = item.Value.GalaxyBookmarkType;
                             waypoint.GalaxyBookmarkNumber = item.Value.GalaxyBookmarkNumber;
@@ -183,7 +150,7 @@ namespace EDAP_Waypoint_Editor
                     }
                 }
 
-                this.DataContext = Waypoints.Waypoints;
+                //this.DataContext = Waypoints.Waypoints;
 
                 DataGridWaypoints.ItemsSource = Waypoints.Waypoints;
                 DataGridGlobalShoppingList.ItemsSource = Waypoints.globalshoppinglist.BuyCommodities;
@@ -195,225 +162,36 @@ namespace EDAP_Waypoint_Editor
             return true;
         }
 
-        private void SettingsSave()
+        private void ButtonBestTradeFetch_Click(object sender, RoutedEventArgs e)
         {
-            string AppDataFolder = Path.Combine(Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), ProductName);
-            if (!Directory.Exists(AppDataFolder))
-                Directory.CreateDirectory(AppDataFolder);
+            var html = @"https://inara.cz/elite/market-traderoutes/?ps1=Dhan&pi10=720&pi2=40&pi5=72&pi3=3&pi9=10000&pi4=1&pi14=2&pi15=2&pi7=2500&pi12=0&pi1=4&pi11=1&pi8=1";
 
-            programSettings.MainFormX = this.Left;
-            programSettings.MainFormY = this.Top;
-            programSettings.MainFormWidth = this.Width;
-            programSettings.MainFormHeight = this.Height;
+            HtmlWeb web = new HtmlWeb();
 
-            // serialize JSON directly to a file
-            string settingsFilename = Path.Combine(AppDataFolder, "Program Settings.json");
-            using (StreamWriter file = File.CreateText(settingsFilename))
-            {
-                JsonSerializer serializer = new JsonSerializer
-                {
-                    Formatting = Formatting.Indented
-                };
-                serializer.Serialize(file, programSettings);
-            }
+            var htmlDoc = web.Load(html);
+
+            var traderoutebox = htmlDoc.DocumentNode.SelectSingleNode("//div[@class='mainblock traderoutebox']");
+
+            var tbl = traderoutebox.Descendants("div")
+            //.Skip(2)
+            .Select(tr => tr.Descendants("td")
+            .Select(td => WebUtility.HtmlDecode(td.InnerText))
+            .ToList())
+            .ToList();
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            SaveWaypointFile("C:\\Users\\shuttle\\OneDrive\\Programming\\Python\\EDAPGui - Stumpii-Main\\waypoints\\waypoints1.json");
-            SettingsSave();
-        }
-
-        private void SaveWaypointFile(string filepath)
-        {
-            RawWaypoints.Clear();
-
-            Waypoint waypointg = new Waypoint();
-            waypointg.Skip = Waypoints.globalshoppinglist.Skip;
-            waypointg.UpdateCommodityCount = Waypoints.globalshoppinglist.UpdateCommodityCount;
-            waypointg.Completed = Waypoints.globalshoppinglist.Completed;
-
-            foreach (var shopitem in Waypoints.globalshoppinglist.BuyCommodities)
-            {
-                if (!waypointg.BuyCommodities.ContainsKey(shopitem.Name))
-                    waypointg.BuyCommodities.Add(shopitem.Name, shopitem.Quantity);
-            }
-
-            RawWaypoints.Add("GlobalShoppingList", waypointg);
-
-            int i = 1;
-            foreach (var item in Waypoints.Waypoints)
-            {
-                Waypoint waypoint = new Waypoint();
-                waypoint.SystemName = item.SystemName;
-                waypoint.GalaxyBookmarkType = item.GalaxyBookmarkType;
-                waypoint.GalaxyBookmarkNumber = item.GalaxyBookmarkNumber;
-                waypoint.StationName = item.StationName;
-                waypoint.SystemBookmarkType = item.SystemBookmarkType;
-                waypoint.SystemBookmarkNumber = item.SystemBookmarkNumber;
-                waypoint.UpdateCommodityCount = item.UpdateCommodityCount;
-                waypoint.FleetCarrierTransfer = item.FleetCarrierTransfer;
-                waypoint.Skip = item.Skip;
-                waypoint.Completed = item.Completed;
-
-                foreach (var shopitem in item.BuyCommodities)
-                {
-                    if (!waypoint.BuyCommodities.ContainsKey(shopitem.Name))
-                        waypoint.BuyCommodities.Add(shopitem.Name, shopitem.Quantity);
-                }
-
-                foreach (var shopitem in item.SellCommodities)
-                {
-                    if (!waypoint.SellCommodities.ContainsKey(shopitem.Name))
-                        waypoint.SellCommodities.Add(shopitem.Name, shopitem.Quantity);
-                }
-
-                RawWaypoints.Add(i.ToString(), waypoint);
-                i++;
-            }
-
-            // serialize JSON directly to a file
-            using (StreamWriter file = File.CreateText(filepath))
-            {
-                JsonSerializer serializer = new JsonSerializer
-                {
-                    Formatting = Formatting.Indented
-                };
-                serializer.Serialize(file, RawWaypoints);
-            }
-        }
-
-        #endregion Methods
-
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            // Add some data to the dictionary
-            commodities["Chemicals"] = new List<string> { "Agronomic Treatment", "Explosives", "Hydrogen Fuel", "Hydrogen Peroxide", "Liquid Oxygen", "Mineral Oil", "Nerve Agents", "Pesticides", "Rockforth Fertiliser", "Surface Stabilisers", "Synthetic Reagents", "Tritium", "Water" };
-            commodities["Consumer Items"] = new List<string> { "Clothing", "Consumer Technology", "Domestic Appliances", "Evacuation Shelter", "Survival Equipment" };
-            commodities["Foods"] = new List<string> { "Algae", "Animal Meat", "Coffee", "Fish", "Food Cartridges", "Fruit and Vegetables", "Grain", "Synthetic Meat", "Tea" };
-            commodities["Industrial Materials"] = new List<string> { "Ceramic Composites", "CMM Composite", "Insulating Membrane", "Meta-Alloys", "Micro-Weave Cooling Hoses", "Neofabric Insulation", "Polymers", "Semiconductors", "Superconductors" };
-            commodities["Legal Drugs"] = new List<string> { "Beer", "Bootleg Liquor", "Liquor", "Narcotics", "Onionhead Gamma Strain", "Tobacco", "Wine" };
-            commodities["Machinery"] = new List<string> { "Articulation Motors", "Atmospheric Processors", "Building Fabricators", "Crop Harvesters", "Emergency Power Cells", "Energy Grid Assembly", "Exhaust Manifold", "Geological Equipment", "Heatsink Interlink", "HN Shock Mount", "Magnetic Emitter Coil", "Marine Equipment", "Microbial Furnaces", "Mineral Extractors", "Modular Terminals", "Power Converter", "Power Generators", "Power Transfer Bus", "Radiation Baffle", "Reinforced Mounting Plate", "Skimmer Components", "Thermal Cooling Units", "Water Purifiers" };
-            commodities["Medicines"] = new List<string> { "Advanced Medicines", "Agri-Medicines", "Basic Medicines", "Combat Stabilisers", "Performance Enhancers", "Progenitor Cells" };
-            commodities["Metals"] = new List<string> { "Aluminium", "Beryllium", "Bismuth", "Cobalt", "Copper", "Gallium", "Gold", "Hafnium 178", "Indium", "Lanthanum", "Lithium", "Osmium", "Palladium", "Platinum", "Platinum Alloy", "Praseodymium", "Samarium", "Silver", "Steel", "Tantalum", "Thallium", "Thorium", "Titanium", "Uranium" };
-            commodities["Minerals"] = new List<string> { "Alexandrite", "Bauxite", "Benitoite", "Bertrandite", "Bromellite", "Coltan", "Cryolite", "Gallite", "Goslarite", "Grandidierite", "Indite", "Jadeite", "Lepidolite", "Lithium Hydroxide", "Low Temperature Diamonds", "Methane Clathrate", "Methanol Monohydrate Crystals", "Moissanite", "Monazite", "Musgravite", "Painite", "Pyrophyllite", "Rhodplumsite", "Rutile", "Serendibite", "Taaffeite", "Uraninite", "Void Opals" };
-            commodities["Salvage"] = new List<string> { "AI Relics", "Ancient Artefact", "Ancient Key", "Anomaly Particles", "Antimatter Containment Unit", "Antique Jewellery", "Antiquities", "Assault Plans", "Black Box", "Commercial Samples", "Damaged Escape Pod", "Data Core", "Diplomatic Bag", "Earth Relics", "Encrypted Correspondence", "Encrypted Data Storage", "Experimental Chemicals", "Fossil Remnants", "Gene Bank", "Geological Samples", "Guardian Casket", "Guardian Orb", "Guardian Relic", "Guardian Tablet", "Guardian Totem", "Guardian Urn", "Hostage", "Large Survey Data Cache", "Military Intelligence", "Military Plans", "Mollusc Brain Tissue", "Mollusc Fluid", "Mollusc Membrane", "Mollusc Mycelium", "Mollusc Soft Tissue", "Mollusc Spores", "Mysterious Idol", "Occupied Escape Pod", "Personal Effects", "Pod Core Tissue", "Pod Dead Tissue", "Pod Mesoglea", "Pod Outer Tissue", "Pod Shell Tissue", "Pod Surface Tissue", "Pod Tissue", "Political Prisoner", "Precious Gems", "Prohibited Research Materials", "Prototype Tech", "Rare Artwork", "Rebel Transmissions", "SAP 8 Core Container", "Scientific Research", "Scientific Samples", "Small Survey Data Cache", "Space Pioneer Relics", "Tactical Data", "Technical Blueprints", "Thargoid Basilisk Tissue Sample", "Thargoid Biological Matter", "Thargoid Bio-Storage Capsule", "Thargoid Cyclops Tissue Sample", "Thargoid Glaive Tissue Sample", "Thargoid Heart", "Thargoid Hydra Tissue Sample", "Thargoid Link", "Thargoid Orthrus Tissue Sample", "Thargoid Probe", "Thargoid Resin", "Thargoid Sensor", "Thargoid Medusa Tissue Sample", "Thargoid Scout Tissue Sample", "Thargoid Technology Samples", "Time Capsule", "Titan Deep Tissue Sample", "Titan Maw Deep Tissue Sample", "Titan Maw Partial Tissue Sample", "Titan Maw Tissue Sample", "Titan Partial Tissue Sample", "Titan Tissue Sample", "Trade Data", "Trinkets of Hidden Fortune", "Unclassified Relic", "Unoccupied Escape Pod", "Unstable Data Core", "Wreckage Components" };
-            commodities["Slavery"] = new List<string> { "Imperial Slaves", "Slaves" };
-            commodities["Technology"] = new List<string> { "Advanced Catalysers", "Animal Monitors", "Aquaponic Systems", "Auto Fabricators", "Bioreducing Lichen", "Computer Components", "H.E. Suits", "Hardware Diagnostic Sensor", "Ion Distributor", "Land Enrichment Systems", "Medical Diagnostic Equipment", "Micro Controllers", "Muon Imager", "Nanobreakers", "Resonating Separators", "Robotics", "Structural Regulators", "Telemetry Suite" };
-            commodities["Textiles"] = new List<string> { "Conductive Fabrics", "Leather", "Military Grade Fabrics", "Natural Fabrics", "Synthetic Fabrics" };
-            commodities["Waste"] = new List<string> { "Biowaste", "Chemical Waste", "Scrap", "Toxic Waste" };
-            commodities["Weapons"] = new List<string> { "Battle Weapons", "Landmines", "Non Lethal Weapons", "Personal Weapons", "Reactive Armour" };
-
-            foreach (var commodity in commodities)
-            {
-                foreach (var item in commodity.Value)
-                {
-                    AllCommodities.Add(item);
-                }
-            }
-            AllCommodities.Sort();
-
-            if (programSettings.LastOpenFilepath != "")
-            {
-                LoadWaypointFile(programSettings.LastOpenFilepath);
-            }
-            // Load default combos, etc/
-            ComboGalaxyBookmarkType.ItemsSource = GalaxyMapBookmarkTypesList;
-            ComboSystemBookmarkType.ItemsSource = SystemMapBookmarkTypesList;
-
-            DataGridConstructionSites.ItemsSource = programSettings.ConstructionSites;
-
-            // Create a new thread for the subscriber
-            Thread subscriberThread = new Thread(SubscriberTask);
-            subscriberThread.IsBackground = true;
-            subscriberThread.Start();
-        }
-
-        private void FavFoldersDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
-            {
-                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
-                Griditems.DataContext = wp;
-                DataGridBuyShoppingList.ItemsSource = wp.BuyCommodities;
-                DataGridSellShoppingList.ItemsSource = wp.SellCommodities;
-            }
-            else
-            {
-                Griditems.DataContext = null;
-                DataGridBuyShoppingList.ItemsSource = null;
-                DataGridSellShoppingList.ItemsSource = null;
-            }
-        }
-
-        private void MenuFileExit(object sender, RoutedEventArgs e)
-        {
-            this.Close();
-        }
-
-        private void MenuFileSave_Click(object sender, RoutedEventArgs e)
-        {
-            if (programSettings.LastOpenFilepath != "")
-                SaveWaypointFile(programSettings.LastOpenFilepath);
-            else
-                MenuFileSaveAs(null, new RoutedEventArgs());
-        }
-
-        private void MenuFileOpen_Click(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Json file (*.json)|*.json";
-            if (openFileDialog.ShowDialog() == true)
-            {
-                LoadWaypointFile(openFileDialog.FileName);
-                programSettings.LastOpenFilepath = openFileDialog.FileName;
-            }
-        }
-
-        private void MenuFileNew_Click(object sender, RoutedEventArgs e)
-        {
-            RawWaypoints = new Dictionary<string, Waypoint>();
-            Waypoints = new InternalWaypoints();
-        }
-
-        private void MenuFileSaveAs(object sender, RoutedEventArgs e)
-        {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "Json file (*.json)|*.json";
-            if (saveFileDialog.ShowDialog() == true)
-            {
-                SaveWaypointFile(saveFileDialog.FileName);
-                programSettings.LastOpenFilepath = saveFileDialog.FileName;
-            }
-        }
-
-        private void ButtonWaypointUp_Click(object sender, RoutedEventArgs e)
+        private void ButtonBuyAdd_Click(object sender, RoutedEventArgs e)
         {
             if (DataGridWaypoints.SelectedItem is InternalWaypoint)
             {
                 var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
 
-                int currindex = Waypoints.Waypoints.IndexOf(wp);
-                Waypoints.Waypoints.Move(currindex, MoveDirection.Up);
-
-                DataGridWaypoints.Items.Refresh();
+                wp.BuyCommodities.Add(new ShoppingItem("New Item"));
+                DataGridBuyShoppingList.Items.Refresh();
             }
         }
 
-        private void ButtonWaypointDown_Click(object sender, RoutedEventArgs e)
-        {
-            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
-            {
-                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
-
-                int currindex = Waypoints.Waypoints.IndexOf(wp);
-                Waypoints.Waypoints.Move(currindex, MoveDirection.Down);
-
-                DataGridWaypoints.Items.Refresh();
-            }
-        }
-
-        private void ButtonBuyUp_Click(object sender, RoutedEventArgs e)
+        private void ButtonBuyDel_Click(object sender, RoutedEventArgs e)
         {
             if (DataGridWaypoints.SelectedItem is InternalWaypoint)
             {
@@ -423,8 +201,7 @@ namespace EDAP_Waypoint_Editor
                 {
                     var item = (ShoppingItem)DataGridBuyShoppingList.SelectedItem;
 
-                    int currindex = wp.BuyCommodities.IndexOf(item);
-                    wp.BuyCommodities.Move(currindex, MoveDirection.Up);
+                    wp.BuyCommodities.Remove(item);
 
                     DataGridBuyShoppingList.Items.Refresh();
                 }
@@ -449,53 +226,134 @@ namespace EDAP_Waypoint_Editor
             }
         }
 
-        private void ButtonSellUp_Click(object sender, RoutedEventArgs e)
+        private void ButtonBuyUp_Click(object sender, RoutedEventArgs e)
         {
             if (DataGridWaypoints.SelectedItem is InternalWaypoint)
             {
                 var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
 
-                if (DataGridSellShoppingList.SelectedItem is ShoppingItem)
+                if (DataGridBuyShoppingList.SelectedItem is ShoppingItem)
                 {
-                    var item = (ShoppingItem)DataGridSellShoppingList.SelectedItem;
+                    var item = (ShoppingItem)DataGridBuyShoppingList.SelectedItem;
 
-                    int currindex = wp.SellCommodities.IndexOf(item);
-                    wp.SellCommodities.Move(currindex, MoveDirection.Up);
+                    int currindex = wp.BuyCommodities.IndexOf(item);
+                    wp.BuyCommodities.Move(currindex, MoveDirection.Up);
 
-                    DataGridSellShoppingList.Items.Refresh();
+                    DataGridBuyShoppingList.Items.Refresh();
                 }
             }
         }
 
-        private void ButtonSellDown_Click(object sender, RoutedEventArgs e)
+        private void ButtonConstructionAdd_Click(object sender, RoutedEventArgs e)
         {
-            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            // Sort based on value
+            ConstructionCommodities.Sort((a, b) => a.Value.CompareTo(b.Value));
+            ConstructionCommodities.Reverse();
+
+            foreach (var progItem in ConstructionCommodities)
             {
-                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
-
-                if (DataGridSellShoppingList.SelectedItem is ShoppingItem)
+                if (progItem.Remaining > 0)
                 {
-                    var item = (ShoppingItem)DataGridSellShoppingList.SelectedItem;
+                    // Check if item exists already
+                    bool found = false;
+                    foreach (var item2 in Waypoints.globalshoppinglist.BuyCommodities)
+                    {
+                        // Check if item exists
+                        if (item2.Name.ToUpper() == progItem.Resource.ToUpper())
+                        {
+                            // Add count
+                            item2.Quantity = item2.Quantity + progItem.Remaining;
+                            found = true;
+                        }
+                    }
 
-                    int currindex = wp.SellCommodities.IndexOf(item);
-                    wp.SellCommodities.Move(currindex, MoveDirection.Down);
+                    // Add item if not found
+                    if (!found)
+                        Waypoints.globalshoppinglist.BuyCommodities.Add(new ShoppingItem(progItem.Resource, progItem.Remaining));
+                }
+            }
 
-                    DataGridSellShoppingList.Items.Refresh();
+            DataGridGlobalShoppingList.Items.Refresh();
+
+            MessageBox.Show("Finished.", ProductName, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void ButtonConstructionFetch_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridConstructionSites.SelectedItem is ConstructionSite)
+            {
+                var item = (ConstructionSite)DataGridConstructionSites.SelectedItem;
+
+                //var html = @"https://inara.cz/elite/station-depot/797775/";
+                var html = item.Path;
+
+                HtmlWeb web = new HtmlWeb();
+
+                var htmlDoc = web.Load(html);
+
+                var table = htmlDoc.DocumentNode.SelectSingleNode("/html[1]/body[1]/div[3]/div[3]/div[4]/table[1]");
+                if (table != null)
+                {
+                    var hdr = table.Descendants("th")
+                        .Select(td => WebUtility.HtmlDecode(td.InnerText))
+                        .ToList();
+
+                    var tbl = table.Descendants("tr")
+                    //.Skip(2)
+                    .Select(tr => tr.Descendants("td")
+                    .Select(td => WebUtility.HtmlDecode(td.InnerText))
+                    .ToList())
+                    .ToList();
+
+                    ConstructionCommodities = new List<ConstructionCommodity>();
+
+                    foreach (var tr in tbl)
+                    {
+                        string resource = tr[0].Trim();
+                        double.TryParse(tr[1].Replace("%", "").Trim(), out double progress);
+                        int.TryParse(tr[2].Replace(",", "").Trim(), out int required);
+                        int.TryParse(tr[3].Replace(",", "").Trim(), out int delivered);
+                        int.TryParse(tr[4].Replace(",", "").Trim(), out int remaining);
+                        int.TryParse(tr[5].Replace(",", "").Replace("Cr", "").Trim(), out int value);
+
+                        ConstructionCommodities.Add(new ConstructionCommodity()
+                        {
+                            Resource = resource,
+                            Progress = progress,
+                            Required = required,
+                            Delivered = delivered,
+                            Remaining = remaining,
+                            Value = value
+                        });
+                    }
+
+                    DataGridConstructionCommodities.ItemsSource = ConstructionCommodities;
                 }
             }
         }
 
-        private void ButtonGlobalBuyUp_Click(object sender, RoutedEventArgs e)
+        private void ButtonGlobalBuyAdd_Click(object sender, RoutedEventArgs e)
+        {
+            Waypoints.globalshoppinglist.BuyCommodities.Add(new ShoppingItem("New Item"));
+            DataGridGlobalShoppingList.Items.Refresh();
+        }
+
+        private void ButtonGlobalBuyDel_Click(object sender, RoutedEventArgs e)
         {
             if (DataGridGlobalShoppingList.SelectedItem is ShoppingItem)
             {
                 var item = (ShoppingItem)DataGridGlobalShoppingList.SelectedItem;
 
-                int currindex = Waypoints.globalshoppinglist.BuyCommodities.IndexOf(item);
-                Waypoints.globalshoppinglist.BuyCommodities.Move(currindex, MoveDirection.Up);
+                Waypoints.globalshoppinglist.BuyCommodities.Remove(item);
 
                 DataGridGlobalShoppingList.Items.Refresh();
             }
+        }
+
+        private void ButtonGlobalBuyDelAll_Click(object sender, RoutedEventArgs e)
+        {
+            Waypoints.globalshoppinglist.BuyCommodities.Clear();
+            DataGridGlobalShoppingList.Items.Refresh();
         }
 
         private void ButtonGlobalBuyDown_Click(object sender, RoutedEventArgs e)
@@ -511,120 +369,17 @@ namespace EDAP_Waypoint_Editor
             }
         }
 
-        private void ButtonWaypointAdd_Click(object sender, RoutedEventArgs e)
-        {
-            Waypoints.Waypoints.Add(new InternalWaypoint("New System", ""));
-            DataGridWaypoints.Items.Refresh();
-        }
-
-        private void ButtonBuyAdd_Click(object sender, RoutedEventArgs e)
-        {
-            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
-            {
-                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
-
-                wp.BuyCommodities.Add(new ShoppingItem("New Item"));
-                DataGridBuyShoppingList.Items.Refresh();
-            }
-        }
-
-        private void ButtonSellAdd_Click(object sender, RoutedEventArgs e)
-        {
-            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
-            {
-                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
-
-                wp.SellCommodities.Add(new ShoppingItem("New Item"));
-                DataGridSellShoppingList.Items.Refresh();
-            }
-        }
-
-        private void ButtonGlobalBuyAdd_Click(object sender, RoutedEventArgs e)
-        {
-            Waypoints.globalshoppinglist.BuyCommodities.Add(new ShoppingItem("New Item"));
-            DataGridGlobalShoppingList.Items.Refresh();
-        }
-
-        private void ButtonWaypointDel_Click(object sender, RoutedEventArgs e)
-        {
-            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
-            {
-                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
-                Waypoints.Waypoints.Remove(wp);
-                DataGridWaypoints.Items.Refresh();
-            }
-        }
-
-        private void ButtonBuyDel_Click(object sender, RoutedEventArgs e)
-        {
-            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
-            {
-                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
-
-                if (DataGridBuyShoppingList.SelectedItem is ShoppingItem)
-                {
-                    var item = (ShoppingItem)DataGridBuyShoppingList.SelectedItem;
-
-                    wp.BuyCommodities.Remove(item);
-
-                    DataGridBuyShoppingList.Items.Refresh();
-                }
-            }
-        }
-
-        private void ButtonSellDel_Click(object sender, RoutedEventArgs e)
-        {
-            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
-            {
-                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
-
-                if (DataGridSellShoppingList.SelectedItem is ShoppingItem)
-                {
-                    var item = (ShoppingItem)DataGridSellShoppingList.SelectedItem;
-
-                    wp.SellCommodities.Remove(item);
-
-                    DataGridSellShoppingList.Items.Refresh();
-                }
-            }
-        }
-
-        private void ButtonGlobalBuyDel_Click(object sender, RoutedEventArgs e)
+        private void ButtonGlobalBuyUp_Click(object sender, RoutedEventArgs e)
         {
             if (DataGridGlobalShoppingList.SelectedItem is ShoppingItem)
             {
                 var item = (ShoppingItem)DataGridGlobalShoppingList.SelectedItem;
 
-                Waypoints.globalshoppinglist.BuyCommodities.Remove(item);
+                int currindex = Waypoints.globalshoppinglist.BuyCommodities.IndexOf(item);
+                Waypoints.globalshoppinglist.BuyCommodities.Move(currindex, MoveDirection.Up);
 
                 DataGridGlobalShoppingList.Items.Refresh();
             }
-        }
-
-        private void ButtonSellAddAll_Click(object sender, RoutedEventArgs e)
-        {
-            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
-            {
-                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
-
-                wp.SellCommodities.Add(new ShoppingItem("ALL"));
-                DataGridSellShoppingList.Items.Refresh();
-            }
-        }
-
-        private void ToolBarButtonNew_Click(object sender, RoutedEventArgs e)
-        {
-            MenuFileNew_Click(this, new RoutedEventArgs());
-        }
-
-        private void ToolBarButtonOpen_Click(object sender, RoutedEventArgs e)
-        {
-            MenuFileOpen_Click(this, new RoutedEventArgs());
-        }
-
-        private void ToolBarButtonSave_Click(object sender, RoutedEventArgs e)
-        {
-            MenuFileSave_Click(this, new RoutedEventArgs());
         }
 
         private void buttonInaraAdd_Click(object sender, RoutedEventArgs e)
@@ -699,198 +454,398 @@ namespace EDAP_Waypoint_Editor
             MessageBox.Show("Finished.\nRemember to add bookmark data for the stations!", ProductName, MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private List<ConstructionCommodity> ConstructionCommodities;
-
-        private void ButtonConstructionFetch_Click(object sender, RoutedEventArgs e)
+        private void ButtonSellAdd_Click(object sender, RoutedEventArgs e)
         {
-            if (DataGridConstructionSites.SelectedItem is ConstructionSite)
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
             {
-                var item = (ConstructionSite)DataGridConstructionSites.SelectedItem;
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
 
-                //var html = @"https://inara.cz/elite/station-depot/797775/";
-                var html = item.Path;
+                wp.SellCommodities.Add(new ShoppingItem("New Item"));
+                DataGridSellShoppingList.Items.Refresh();
+            }
+        }
 
-                HtmlWeb web = new HtmlWeb();
+        private void ButtonSellAddAll_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
 
-                var htmlDoc = web.Load(html);
+                wp.SellCommodities.Add(new ShoppingItem("ALL"));
+                DataGridSellShoppingList.Items.Refresh();
+            }
+        }
 
-                var table = htmlDoc.DocumentNode.SelectSingleNode("/html[1]/body[1]/div[3]/div[3]/div[4]/table[1]");
-                if (table != null)
+        private void ButtonSellDel_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                if (DataGridSellShoppingList.SelectedItem is ShoppingItem)
                 {
-                    var hdr = table.Descendants("th")
-                        .Select(td => WebUtility.HtmlDecode(td.InnerText))
-                        .ToList();
+                    var item = (ShoppingItem)DataGridSellShoppingList.SelectedItem;
 
-                    var tbl = table.Descendants("tr")
-                    //.Skip(2)
-                    .Select(tr => tr.Descendants("td")
-                    .Select(td => WebUtility.HtmlDecode(td.InnerText))
-                    .ToList())
-                    .ToList();
+                    wp.SellCommodities.Remove(item);
 
-                    ConstructionCommodities = new List<ConstructionCommodity>();
+                    DataGridSellShoppingList.Items.Refresh();
+                }
+            }
+        }
 
-                    foreach (var tr in tbl)
+        private void ButtonSellDown_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                if (DataGridSellShoppingList.SelectedItem is ShoppingItem)
+                {
+                    var item = (ShoppingItem)DataGridSellShoppingList.SelectedItem;
+
+                    int currindex = wp.SellCommodities.IndexOf(item);
+                    wp.SellCommodities.Move(currindex, MoveDirection.Down);
+
+                    DataGridSellShoppingList.Items.Refresh();
+                }
+            }
+        }
+
+        private void ButtonSellUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                if (DataGridSellShoppingList.SelectedItem is ShoppingItem)
+                {
+                    var item = (ShoppingItem)DataGridSellShoppingList.SelectedItem;
+
+                    int currindex = wp.SellCommodities.IndexOf(item);
+                    wp.SellCommodities.Move(currindex, MoveDirection.Up);
+
+                    DataGridSellShoppingList.Items.Refresh();
+                }
+            }
+        }
+
+        private void ButtonWaypointAdd_Click(object sender, RoutedEventArgs e)
+        {
+            Waypoints.Waypoints.Add(new InternalWaypoint("New System", ""));
+            DataGridWaypoints.Items.Refresh();
+        }
+
+        private void ButtonWaypointDel_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+                Waypoints.Waypoints.Remove(wp);
+                DataGridWaypoints.Items.Refresh();
+            }
+        }
+
+        private void ButtonWaypointDown_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                int currindex = Waypoints.Waypoints.IndexOf(wp);
+                Waypoints.Waypoints.Move(currindex, MoveDirection.Down);
+
+                DataGridWaypoints.Items.Refresh();
+            }
+        }
+
+        private void ButtonWaypointUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+
+                int currindex = Waypoints.Waypoints.IndexOf(wp);
+                Waypoints.Waypoints.Move(currindex, MoveDirection.Up);
+
+                DataGridWaypoints.Items.Refresh();
+            }
+        }
+
+        private void EDAP_EDMesg_Client_EDAPLocation_Received(object sender, EDAP_EDMesg_Client.EDAPLocationEventArgs e)
+        {
+            MessageBox.Show(e.EventData.path);
+        }
+
+        private void EDAP_EDMesg_Client_LaunchComplete_Received(object sender, EventArgs e)
+        {
+        }
+
+        private void EDAP_EDMesg_Client_SpeakingPhrase_Received(object sender, EDAP_EDMesg_Client.SpeakingPhraseEventArgs e)
+        {
+        }
+
+        private void FavFoldersDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (DataGridWaypoints.SelectedItem is InternalWaypoint)
+            {
+                var wp = (InternalWaypoint)DataGridWaypoints.SelectedItem;
+                Griditems.DataContext = wp;
+                DataGridBuyShoppingList.ItemsSource = wp.BuyCommodities;
+                DataGridSellShoppingList.ItemsSource = wp.SellCommodities;
+            }
+            else
+            {
+                Griditems.DataContext = null;
+                DataGridBuyShoppingList.ItemsSource = null;
+                DataGridSellShoppingList.ItemsSource = null;
+            }
+        }
+
+        private void MenuFileExit(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+
+        private void MenuFileNew_Click(object sender, RoutedEventArgs e)
+        {
+            RawWaypoints = new Dictionary<string, Waypoint>();
+            Waypoints = new InternalWaypoints();
+        }
+
+        private void MenuFileOpen_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Json file (*.json)|*.json";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                LoadWaypointFile(openFileDialog.FileName);
+                programSettings.LastOpenFilepath = openFileDialog.FileName;
+            }
+        }
+
+        private void MenuFileSave_Click(object sender, RoutedEventArgs e)
+        {
+            if (programSettings.LastOpenFilepath != "")
+                SaveWaypointFile(programSettings.LastOpenFilepath);
+            else
+                MenuFileSaveAs(null, new RoutedEventArgs());
+        }
+
+        private void MenuFileSaveAs(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "Json file (*.json)|*.json";
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                SaveWaypointFile(saveFileDialog.FileName);
+                programSettings.LastOpenFilepath = saveFileDialog.FileName;
+            }
+        }
+
+        private void SaveWaypointFile(string filepath)
+        {
+            RawWaypoints.Clear();
+
+            Waypoint waypointg = new Waypoint();
+            waypointg.Skip = Waypoints.globalshoppinglist.Skip;
+            waypointg.UpdateCommodityCount = Waypoints.globalshoppinglist.UpdateCommodityCount;
+            waypointg.Completed = Waypoints.globalshoppinglist.Completed;
+
+            foreach (var shopitem in Waypoints.globalshoppinglist.BuyCommodities)
+            {
+                if (!waypointg.BuyCommodities.ContainsKey(shopitem.Name))
+                    waypointg.BuyCommodities.Add(shopitem.Name, shopitem.Quantity);
+            }
+
+            RawWaypoints.Add("GlobalShoppingList", waypointg);
+
+            int i = 1;
+            foreach (var item in Waypoints.Waypoints)
+            {
+                Waypoint waypoint = new Waypoint();
+                waypoint.SystemName = item.SystemName;
+                waypoint.Comment = item.Comment;
+                waypoint.GalaxyBookmarkType = item.GalaxyBookmarkType;
+                waypoint.GalaxyBookmarkNumber = item.GalaxyBookmarkNumber;
+                waypoint.StationName = item.StationName;
+                waypoint.SystemBookmarkType = item.SystemBookmarkType;
+                waypoint.SystemBookmarkNumber = item.SystemBookmarkNumber;
+                waypoint.UpdateCommodityCount = item.UpdateCommodityCount;
+                waypoint.FleetCarrierTransfer = item.FleetCarrierTransfer;
+                waypoint.Skip = item.Skip;
+                waypoint.Completed = item.Completed;
+
+                foreach (var shopitem in item.BuyCommodities)
+                {
+                    if (!waypoint.BuyCommodities.ContainsKey(shopitem.Name))
+                        waypoint.BuyCommodities.Add(shopitem.Name, shopitem.Quantity);
+                }
+
+                foreach (var shopitem in item.SellCommodities)
+                {
+                    if (!waypoint.SellCommodities.ContainsKey(shopitem.Name))
+                        waypoint.SellCommodities.Add(shopitem.Name, shopitem.Quantity);
+                }
+
+                RawWaypoints.Add(i.ToString(), waypoint);
+                i++;
+            }
+
+            // serialize JSON directly to a file
+            using (StreamWriter file = File.CreateText(filepath))
+            {
+                JsonSerializer serializer = new JsonSerializer
+                {
+                    Formatting = Formatting.Indented
+                };
+                serializer.Serialize(file, RawWaypoints);
+            }
+        }
+
+        private void Serializer_Error(object sender, Newtonsoft.Json.Serialization.ErrorEventArgs e)
+        {
+            Debug.WriteLine(e.ErrorContext.Error.Message);
+            MessageBox.Show("Serializer_Error.", ProductName, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void SettingsLoad()
+        {
+            try
+            {
+                string AppDataFolder = Path.Combine(Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), ProductName);
+                if (!Directory.Exists(AppDataFolder))
+                    Directory.CreateDirectory(AppDataFolder);
+
+                // deserialize JSON directly from a file
+                string settingsFilename = Path.Combine(AppDataFolder, "Program Settings.json");
+                if (File.Exists(settingsFilename))
+                {
+                    using (StreamReader file = File.OpenText(settingsFilename))
                     {
-                        string resource = tr[0].Trim();
-                        double.TryParse(tr[1].Replace("%", "").Trim(), out double progress);
-                        int.TryParse(tr[2].Replace(",", "").Trim(), out int required);
-                        int.TryParse(tr[3].Replace(",", "").Trim(), out int delivered);
-                        int.TryParse(tr[4].Replace(",", "").Trim(), out int remaining);
-                        int.TryParse(tr[5].Replace(",", "").Replace("Cr", "").Trim(), out int value);
+                        JsonSerializer serializer = new JsonSerializer();
+                        serializer.Error += Serializer_Error;
+                        programSettings = (ProgramSettings)serializer.Deserialize(file, typeof(ProgramSettings));
 
-                        ConstructionCommodities.Add(new ConstructionCommodity()
-                        {
-                            Resource = resource,
-                            Progress = progress,
-                            Required = required,
-                            Delivered = delivered,
-                            Remaining = remaining,
-                            Value = value
-                        });
+                        this.Left = programSettings.MainFormX;
+                        this.Top = programSettings.MainFormY;
+                        this.Width = programSettings.MainFormWidth;
+                        this.Height = programSettings.MainFormHeight;
+
+                        this.DataContext = programSettings;
                     }
-
-                    DataGridConstructionCommodities.ItemsSource = ConstructionCommodities;
                 }
             }
-        }
-
-        private void ButtonGlobalBuyDelAll_Click(object sender, RoutedEventArgs e)
-        {
-            Waypoints.globalshoppinglist.BuyCommodities.Clear();
-            DataGridGlobalShoppingList.Items.Refresh();
-        }
-
-        private void ButtonConstructionAdd_Click(object sender, RoutedEventArgs e)
-        {
-            // Sort based on value
-            ConstructionCommodities.Sort((a, b) => a.Value.CompareTo(b.Value));
-            ConstructionCommodities.Reverse();
-
-            foreach (var progItem in ConstructionCommodities)
+            catch (Exception)
             {
-                if (progItem.Remaining > 0)
-                {
-                    // Check if item exists already
-                    bool found = false;
-                    foreach (var item2 in Waypoints.globalshoppinglist.BuyCommodities)
-                    {
-                        // Check if item exists
-                        if (item2.Name.ToUpper() == progItem.Resource.ToUpper())
-                        {
-                            // Add count
-                            item2.Quantity = item2.Quantity + progItem.Remaining;
-                            found = true;
-                        }
-                    }
-
-                    // Add item if not found
-                    if (!found)
-                        Waypoints.globalshoppinglist.BuyCommodities.Add(new ShoppingItem(progItem.Resource, progItem.Remaining));
-                }
+                //throw;
             }
-
-            DataGridGlobalShoppingList.Items.Refresh();
-
-            MessageBox.Show("Finished.", ProductName, MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void ButtonBestTradeFetch_Click(object sender, RoutedEventArgs e)
+        private void SettingsSave()
         {
-            var html = @"https://inara.cz/elite/market-traderoutes/?ps1=Dhan&pi10=720&pi2=40&pi5=72&pi3=3&pi9=10000&pi4=1&pi14=2&pi15=2&pi7=2500&pi12=0&pi1=4&pi11=1&pi8=1";
+            string AppDataFolder = Path.Combine(Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), ProductName);
+            if (!Directory.Exists(AppDataFolder))
+                Directory.CreateDirectory(AppDataFolder);
 
-            HtmlWeb web = new HtmlWeb();
+            programSettings.MainFormX = this.Left;
+            programSettings.MainFormY = this.Top;
+            programSettings.MainFormWidth = this.Width;
+            programSettings.MainFormHeight = this.Height;
 
-            var htmlDoc = web.Load(html);
-
-            var traderoutebox = htmlDoc.DocumentNode.SelectSingleNode("//div[@class='mainblock traderoutebox']");
-
-            var tbl = traderoutebox.Descendants("div")
-            //.Skip(2)
-            .Select(tr => tr.Descendants("td")
-            .Select(td => WebUtility.HtmlDecode(td.InnerText))
-            .ToList())
-            .ToList();
-        }
-
-        private const int SEND_PORT_NO = 15570;
-        private const int RECEIVE_PORT_NO = 15571;
-
-        private void ToolBarButtonUndock_Click(object sender, RoutedEventArgs e)
-        {
-            EDMesgEnvelope msg = new EDMesgEnvelope("UndockAction", new Dictionary<string, string>());
-            SendMesgToEDAP(msg);
-        }
-
-        private void SubscriberTask()
-        {
-            var topic = "";
-            using (var subSocket = new SubscriberSocket())
+            // serialize JSON directly to a file
+            string settingsFilename = Path.Combine(AppDataFolder, "Program Settings.json");
+            using (StreamWriter file = File.CreateText(settingsFilename))
             {
-                subSocket.Options.ReceiveHighWatermark = 1000;
-                subSocket.Connect($"tcp://localhost:{RECEIVE_PORT_NO}");
-                subSocket.Subscribe(topic);
-                Console.WriteLine("Subscriber socket connecting...");
-                while (true)
+                JsonSerializer serializer = new JsonSerializer
                 {
-                    byte[] workload = subSocket.ReceiveFrameBytes();
-
-                    string messageTopicReceived = UTF8Encoding.UTF8.GetString(workload);
-                    EDMesgEnvelope msgRec = JsonConvert.DeserializeObject<EDMesgEnvelope>(messageTopicReceived);
-
-                    if (msgRec.type == "UndockCompleteEvent")
-                    { }
-                    else if (msgRec.type == "SpeakingPhraseEvent")
-                    { }
-
-                    //string messageTopicReceived = subSocket.ReceiveFrameString();
-                    Console.WriteLine(msgRec.type);
-                }
+                    Formatting = Formatting.Indented
+                };
+                serializer.Serialize(file, programSettings);
             }
         }
 
-        private void ToolBarButtonStopAllAssists_Click(object sender, RoutedEventArgs e)
+        private void ToolBarButtonLaunch_Click(object sender, RoutedEventArgs e)
         {
-            EDMesgEnvelope msg = new EDMesgEnvelope("StopAllAssistsAction", new Dictionary<string, string>());
-            SendMesgToEDAP(msg);
-        }
+            //eDAP_EDMesg_Client.SendActionToEDAP(new GetEDAPLocationAction());
 
-        private void ToolBarButtonStartWaypointAssist_Click(object sender, RoutedEventArgs e)
-        {
-            EDMesgEnvelope msg = new EDMesgEnvelope("StartWaypointAssistAction", new Dictionary<string, string>());
-            SendMesgToEDAP(msg);
+            eDAP_EDMesg_Client.SendActionToEDAP(new LaunchAction());
         }
 
         private void ToolBarButtonLoadWaypointFile_Click(object sender, RoutedEventArgs e)
         {
-            EDMesgEnvelope msg = new EDMesgEnvelope("LoadWaypointFileAction", new Dictionary<string, string>
-                {
-                    { "filepath", programSettings.LastOpenFilepath }
-                });
-            SendMesgToEDAP(msg);
+            eDAP_EDMesg_Client.SendActionToEDAP(new LoadWaypointFileAction() { filepath = programSettings.LastOpenFilepath });
         }
 
-        /// <summary>
-        /// Send an Action to EDAP
-        /// </summary>
-        /// <param name="msg">The action message to send.</param>
-        private void SendMesgToEDAP(EDMesgEnvelope msg)
+        private void ToolBarButtonNew_Click(object sender, RoutedEventArgs e)
         {
-            if (msg is null)
-                return;
-
-            using (var client1 = new PushSocket($"tcp://localhost:{SEND_PORT_NO}"))
-            {
-                // Wait a little for the socket
-                Thread.Sleep(50);
-
-                string serMsg = msg.GetJSon();
-
-                Console.WriteLine($"Sending {serMsg}" + Environment.NewLine);
-
-                byte[] bytesToSend1 = UTF8Encoding.UTF8.GetBytes(serMsg);
-                client1.SendFrame(bytesToSend1);
-            }
+            MenuFileNew_Click(this, new RoutedEventArgs());
         }
+
+        private void ToolBarButtonOpen_Click(object sender, RoutedEventArgs e)
+        {
+            MenuFileOpen_Click(this, new RoutedEventArgs());
+        }
+
+        private void ToolBarButtonSave_Click(object sender, RoutedEventArgs e)
+        {
+            MenuFileSave_Click(this, new RoutedEventArgs());
+        }
+
+        private void ToolBarButtonStartWaypointAssist_Click(object sender, RoutedEventArgs e)
+        {
+            eDAP_EDMesg_Client.SendActionToEDAP(new StartWaypointAssistAction());
+        }
+
+        private void ToolBarButtonStopAllAssists_Click(object sender, RoutedEventArgs e)
+        {
+            eDAP_EDMesg_Client.SendActionToEDAP(new StopAllAssistsAction());
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            SaveWaypointFile("C:\\Users\\shuttle\\OneDrive\\Programming\\Python\\EDAPGui - Stumpii-Main\\waypoints\\waypoints1.json");
+            SettingsSave();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Add some data to the dictionary
+            commodities["Chemicals"] = new List<string> { "Agronomic Treatment", "Explosives", "Hydrogen Fuel", "Hydrogen Peroxide", "Liquid Oxygen", "Mineral Oil", "Nerve Agents", "Pesticides", "Rockforth Fertiliser", "Surface Stabilisers", "Synthetic Reagents", "Tritium", "Water" };
+            commodities["Consumer Items"] = new List<string> { "Clothing", "Consumer Technology", "Domestic Appliances", "Evacuation Shelter", "Survival Equipment" };
+            commodities["Foods"] = new List<string> { "Algae", "Animal Meat", "Coffee", "Fish", "Food Cartridges", "Fruit and Vegetables", "Grain", "Synthetic Meat", "Tea" };
+            commodities["Industrial Materials"] = new List<string> { "Ceramic Composites", "CMM Composite", "Insulating Membrane", "Meta-Alloys", "Micro-Weave Cooling Hoses", "Neofabric Insulation", "Polymers", "Semiconductors", "Superconductors" };
+            commodities["Legal Drugs"] = new List<string> { "Beer", "Bootleg Liquor", "Liquor", "Narcotics", "Onionhead Gamma Strain", "Tobacco", "Wine" };
+            commodities["Machinery"] = new List<string> { "Articulation Motors", "Atmospheric Processors", "Building Fabricators", "Crop Harvesters", "Emergency Power Cells", "Energy Grid Assembly", "Exhaust Manifold", "Geological Equipment", "Heatsink Interlink", "HN Shock Mount", "Magnetic Emitter Coil", "Marine Equipment", "Microbial Furnaces", "Mineral Extractors", "Modular Terminals", "Power Converter", "Power Generators", "Power Transfer Bus", "Radiation Baffle", "Reinforced Mounting Plate", "Skimmer Components", "Thermal Cooling Units", "Water Purifiers" };
+            commodities["Medicines"] = new List<string> { "Advanced Medicines", "Agri-Medicines", "Basic Medicines", "Combat Stabilisers", "Performance Enhancers", "Progenitor Cells" };
+            commodities["Metals"] = new List<string> { "Aluminium", "Beryllium", "Bismuth", "Cobalt", "Copper", "Gallium", "Gold", "Hafnium 178", "Indium", "Lanthanum", "Lithium", "Osmium", "Palladium", "Platinum", "Platinum Alloy", "Praseodymium", "Samarium", "Silver", "Steel", "Tantalum", "Thallium", "Thorium", "Titanium", "Uranium" };
+            commodities["Minerals"] = new List<string> { "Alexandrite", "Bauxite", "Benitoite", "Bertrandite", "Bromellite", "Coltan", "Cryolite", "Gallite", "Goslarite", "Grandidierite", "Indite", "Jadeite", "Lepidolite", "Lithium Hydroxide", "Low Temperature Diamonds", "Methane Clathrate", "Methanol Monohydrate Crystals", "Moissanite", "Monazite", "Musgravite", "Painite", "Pyrophyllite", "Rhodplumsite", "Rutile", "Serendibite", "Taaffeite", "Uraninite", "Void Opals" };
+            commodities["Salvage"] = new List<string> { "AI Relics", "Ancient Artefact", "Ancient Key", "Anomaly Particles", "Antimatter Containment Unit", "Antique Jewellery", "Antiquities", "Assault Plans", "Black Box", "Commercial Samples", "Damaged Escape Pod", "Data Core", "Diplomatic Bag", "Earth Relics", "Encrypted Correspondence", "Encrypted Data Storage", "Experimental Chemicals", "Fossil Remnants", "Gene Bank", "Geological Samples", "Guardian Casket", "Guardian Orb", "Guardian Relic", "Guardian Tablet", "Guardian Totem", "Guardian Urn", "Hostage", "Large Survey Data Cache", "Military Intelligence", "Military Plans", "Mollusc Brain Tissue", "Mollusc Fluid", "Mollusc Membrane", "Mollusc Mycelium", "Mollusc Soft Tissue", "Mollusc Spores", "Mysterious Idol", "Occupied Escape Pod", "Personal Effects", "Pod Core Tissue", "Pod Dead Tissue", "Pod Mesoglea", "Pod Outer Tissue", "Pod Shell Tissue", "Pod Surface Tissue", "Pod Tissue", "Political Prisoner", "Precious Gems", "Prohibited Research Materials", "Prototype Tech", "Rare Artwork", "Rebel Transmissions", "SAP 8 Core Container", "Scientific Research", "Scientific Samples", "Small Survey Data Cache", "Space Pioneer Relics", "Tactical Data", "Technical Blueprints", "Thargoid Basilisk Tissue Sample", "Thargoid Biological Matter", "Thargoid Bio-Storage Capsule", "Thargoid Cyclops Tissue Sample", "Thargoid Glaive Tissue Sample", "Thargoid Heart", "Thargoid Hydra Tissue Sample", "Thargoid Link", "Thargoid Orthrus Tissue Sample", "Thargoid Probe", "Thargoid Resin", "Thargoid Sensor", "Thargoid Medusa Tissue Sample", "Thargoid Scout Tissue Sample", "Thargoid Technology Samples", "Time Capsule", "Titan Deep Tissue Sample", "Titan Maw Deep Tissue Sample", "Titan Maw Partial Tissue Sample", "Titan Maw Tissue Sample", "Titan Partial Tissue Sample", "Titan Tissue Sample", "Trade Data", "Trinkets of Hidden Fortune", "Unclassified Relic", "Unoccupied Escape Pod", "Unstable Data Core", "Wreckage Components" };
+            commodities["Slavery"] = new List<string> { "Imperial Slaves", "Slaves" };
+            commodities["Technology"] = new List<string> { "Advanced Catalysers", "Animal Monitors", "Aquaponic Systems", "Auto Fabricators", "Bioreducing Lichen", "Computer Components", "H.E. Suits", "Hardware Diagnostic Sensor", "Ion Distributor", "Land Enrichment Systems", "Medical Diagnostic Equipment", "Micro Controllers", "Muon Imager", "Nanobreakers", "Resonating Separators", "Robotics", "Structural Regulators", "Telemetry Suite" };
+            commodities["Textiles"] = new List<string> { "Conductive Fabrics", "Leather", "Military Grade Fabrics", "Natural Fabrics", "Synthetic Fabrics" };
+            commodities["Waste"] = new List<string> { "Biowaste", "Chemical Waste", "Scrap", "Toxic Waste" };
+            commodities["Weapons"] = new List<string> { "Battle Weapons", "Landmines", "Non Lethal Weapons", "Personal Weapons", "Reactive Armour" };
+
+            foreach (var commodity in commodities)
+            {
+                foreach (var item in commodity.Value)
+                {
+                    AllCommodities.Add(item);
+                }
+            }
+            AllCommodities.Sort();
+
+            if (programSettings.LastOpenFilepath != "")
+            {
+                LoadWaypointFile(programSettings.LastOpenFilepath);
+            }
+            // Load default combos, etc/
+            ComboGalaxyBookmarkType.ItemsSource = GalaxyMapBookmarkTypesList;
+            ComboSystemBookmarkType.ItemsSource = SystemMapBookmarkTypesList;
+
+            DataGridConstructionSites.ItemsSource = programSettings.ConstructionSites;
+        }
+
+        #endregion Methods
     }
 }

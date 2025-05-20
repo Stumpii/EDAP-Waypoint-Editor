@@ -7,37 +7,27 @@ using System.Threading.Tasks;
 
 namespace EDAP_Waypoint_Editor.Models
 {
-    internal class EDMesg
+    public class EDMesgAction
     {
     }
 
-    public class UndockCompleteEvent
-    { }
-
-    public class SpeakingPhraseEvent
+    public class EDMesgEvent
     {
-        private string Text;
-        private string Reason;
-        private float Duration;
-        private string Timestamp;
     }
 
     public class EDMesgEnvelope
     {
         public string type { get; set; }
-        public Dictionary<string, string> data { get; set; }
+        public IDictionary<string, object> data { get; set; }
 
-        public EDMesgEnvelope(string type, Dictionary<string, string> data)
+        public EDMesgEnvelope(string type, IDictionary<string, object> data)
         {
             this.type = type;
             this.data = data;
         }
 
-        public EDMesgEnvelope()
-        {
-        }
-
         public string GetJSon()
+
         {
             return JsonConvert.SerializeObject(this);
         }

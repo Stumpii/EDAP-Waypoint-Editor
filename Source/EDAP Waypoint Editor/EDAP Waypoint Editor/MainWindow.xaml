@@ -8,11 +8,14 @@
     x:Class="EDAP_Waypoint_Editor.MainWindow"
     Title="EDAP Waypoint Editor"
     Width="818"
-    Height="568"
+    Height="622"
     Closing="Window_Closing"
     Loaded="Window_Loaded"
     ResizeMode="CanResizeWithGrip"
     mc:Ignorable="d">
+    <Window.DataContext>
+        <local:ProgramSettings />
+    </Window.DataContext>
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
@@ -31,7 +34,7 @@
                 <Button x:Name="ToolBarButtonSave" Content="Save" Click="ToolBarButtonSave_Click" />
             </ToolBar>
             <ToolBar>
-                <Button x:Name="ToolBarButtonUndock" Content="Undock" Click="ToolBarButtonUndock_Click" />
+                <Button x:Name="ToolBarButtonUndock" Content="Launch" Click="ToolBarButtonLaunch_Click" />
                 <Button x:Name="ToolBarButtonStopAllAssists" Content="Stop All Assists" Click="ToolBarButtonStopAllAssists_Click" />
                 <Button x:Name="ToolBarButtonStartWaypointAssist" Content="Start Waypoint Assist" Click="ToolBarButtonStartWaypointAssist_Click" />
                 <Button x:Name="ToolBarButtonLoadWaypointFile" Content="Load Waypoint File" Click="ToolBarButtonLoadWaypointFile_Click" />
@@ -43,7 +46,7 @@
                 <Grid Background="#FFE5E5E5">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" MinHeight="180" />
-                        <RowDefinition Height="115" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
@@ -72,6 +75,7 @@
                                 <DataGridTextColumn Binding="{Binding StationName}" Header="Station Name" IsReadOnly="False" />
                                 <DataGridCheckBoxColumn Binding="{Binding Skip}" Header="Skip" IsReadOnly="False" />
                                 <DataGridCheckBoxColumn Binding="{Binding Completed}" Header="Completed" IsReadOnly="False" />
+                                <DataGridTextColumn Binding="{Binding Comment}" Header="Comment" IsReadOnly="False" />
                             </DataGrid.Columns>
                         </DataGrid>
                         <StackPanel Grid.Column="1" HorizontalAlignment="Left" Orientation="Vertical" VerticalAlignment="Top" Margin="2,2,2,2">
@@ -90,16 +94,30 @@
                         <Label Content="Waypoint Options" FontWeight="Bold" FontSize="14" />
                         <Label Content="Station Options" FontWeight="Bold" Grid.Row="1" />
                         <Grid x:Name="Griditems" Grid.Row="2">
-                            <Label Content="Galaxy Bookmark Type:" HorizontalAlignment="Left" VerticalAlignment="Top" />
-                            <Label Content="System Bookmark Type:" HorizontalAlignment="Left" Margin="0,26,0,0" VerticalAlignment="Top" />
-                            <Label Content="Galaxy Bookmark Number:" HorizontalAlignment="Left" Margin="313,0,0,0" VerticalAlignment="Top" />
-                            <TextBox HorizontalAlignment="Left" Margin="471,4,0,0" TextWrapping="Wrap" Text="{Binding GalaxyBookmarkNumber}" VerticalAlignment="Top" Width="59" IsEnabled="{Binding StationDefined}" />
-                            <Label Content="System Bookmark Number:" HorizontalAlignment="Left" Margin="313,26,0,0" VerticalAlignment="Top" />
-                            <TextBox HorizontalAlignment="Left" Margin="471,30,0,0" TextWrapping="Wrap" Text="{Binding SystemBookmarkNumber}" VerticalAlignment="Top" Width="59" IsEnabled="{Binding StationDefined}" />
-                            <CheckBox Content="Update Commodity Count" IsChecked="{Binding UpdateCommodityCount}" Margin="573,3,24,29" IsEnabled="{Binding StationDefined}" />
-                            <CheckBox Content="Fleet Carrier Transfer" IsChecked="{Binding FleetCarrierTransfer}" Margin="573,29,40,3" IsEnabled="{Binding StationDefined}" />
-                            <ComboBox x:Name="ComboGalaxyBookmarkType" HorizontalAlignment="Left" Margin="137,4,0,0" VerticalAlignment="Top" Width="115" Text="{Binding GalaxyBookmarkType}" IsEnabled="{Binding StationDefined}" />
-                            <ComboBox x:Name="ComboSystemBookmarkType" HorizontalAlignment="Left" Margin="137,31,0,0" VerticalAlignment="Top" Width="115" Text="{Binding SystemBookmarkType}" IsEnabled="{Binding StationDefined}" />
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="101*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="48*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" MinHeight="0" />
+                                <RowDefinition Height="Auto" MinHeight="0" />
+                                <RowDefinition Height="Auto" MinHeight="0" />
+                            </Grid.RowDefinitions>
+                            <CheckBox Content="Fleet Carrier" IsChecked="{Binding IsFleetCarrier}" Grid.Column="1" Padding="3,3,3,3" Margin="3,3,3,3" VerticalContentAlignment="Center" IsEnabled="False" />
+                            <CheckBox Content="Colonisation/Construction Ship" IsChecked="{Binding IsColonisation}" Grid.Column="2" Padding="3,3,3,3" Margin="3,3,3,3" VerticalContentAlignment="Center" IsEnabled="False" />
+                            <Label Content="Galaxy Bookmark Type:" Grid.Row="1" />
+                            <Label Content="System Bookmark Type:" Grid.Row="2" Margin="3,3,3,3" />
+                            <Label Content="Galaxy Bookmark Number:" Grid.Column="2" Grid.Row="1" />
+                            <TextBox TextWrapping="Wrap" Text="{Binding GalaxyBookmarkNumber}" IsEnabled="{Binding StationDefined}" Grid.Column="3" Grid.Row="1" Margin="3,3,3,3" />
+                            <Label Content="System Bookmark Number:" Grid.Row="2" Grid.Column="2" Margin="0,3,0,0" />
+                            <TextBox TextWrapping="Wrap" Text="{Binding SystemBookmarkNumber}" IsEnabled="{Binding StationDefined}" Grid.Row="2" Grid.Column="3" Padding="3,3,3,3" Margin="3,3,3,3" />
+                            <CheckBox Content="Update Commodity Count" IsChecked="{Binding UpdateCommodityCount}" IsEnabled="{Binding StationDefined}" Grid.Column="4" Margin="3,3,3,3" Grid.Row="1" Padding="3,3,3,3" VerticalContentAlignment="Center" />
+                            <CheckBox Content="Fleet Carrier Transfer" IsChecked="{Binding FleetCarrierTransfer}" IsEnabled="{Binding StationDefined}" Grid.Row="2" Grid.Column="4" Margin="0,3,0,0" VerticalContentAlignment="Center" />
+                            <ComboBox x:Name="ComboGalaxyBookmarkType" Text="{Binding GalaxyBookmarkType}" IsEnabled="{Binding StationDefined}" Grid.Column="1" Grid.Row="1" Padding="3,3,3,3" />
+                            <ComboBox x:Name="ComboSystemBookmarkType" Text="{Binding SystemBookmarkType}" IsEnabled="{Binding StationDefined}" Grid.Row="2" Grid.Column="1" Padding="3,3,3,3" Margin="0,3,0,3" />
                         </Grid>
                     </Grid>
                     <Grid Margin="0,5,0,5" Grid.Row="2">
@@ -221,6 +239,7 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
                                 <DataGridTextColumn Binding="{Binding Quantity}" Header="Quantity" IsReadOnly="False" />
+                                <DataGridTextColumn Binding="{Binding Add}" Header="Add/Sub" IsReadOnly="False" />
                             </DataGrid.Columns>
                         </DataGrid>
                         <StackPanel Grid.Column="1" HorizontalAlignment="Left" Orientation="Vertical" VerticalAlignment="Top" Margin="2,2,2,2">
@@ -310,6 +329,49 @@
                         </DataGrid.Columns>
                     </DataGrid>
                     <Button x:Name="ButtonConstructionAdd" Content="Add to Shopping List" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="3,3,3,3" Grid.Column="1" Grid.Row="1" Height="30" Width="139" Click="ButtonConstructionAdd_Click" />
+                </Grid>
+            </TabItem>
+            <TabItem Header="Notes">
+                <Grid>
+                    <TabControl>
+                        <TabItem Header="Note 1">
+                            <Grid Background="#FFE5E5E5">
+                                <TextBox x:Name="TextBoxNote1"
+                                    AcceptsReturn="True"
+                                    TextWrapping="Wrap"
+                                    VerticalScrollBarVisibility="Auto"
+                                    HorizontalScrollBarVisibility="Auto" Text="{Binding Note1}" />
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="Note 2">
+                            <Grid Background="#FFE5E5E5">
+                                <TextBox x:Name="TextBoxNote2"
+                                    AcceptsReturn="True"
+                                    TextWrapping="Wrap"
+                                    VerticalScrollBarVisibility="Auto"
+                                    HorizontalScrollBarVisibility="Auto" Text="{Binding Note2}" />
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="Note 3">
+                            <Grid Background="#FFE5E5E5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="TextBoxNote3"
+                                    AcceptsReturn="True"
+                                    TextWrapping="Wrap"
+                                    VerticalScrollBarVisibility="Auto"
+                                    HorizontalScrollBarVisibility="Auto" Text="{Binding Note3}" />
+                            </Grid>
+                        </TabItem>
+                        <TabItem Header="Note 4">
+                            <TextBox x:Name="TextBoxNote4"
+                                AcceptsReturn="True"
+                                TextWrapping="Wrap"
+                                VerticalScrollBarVisibility="Auto"
+                                HorizontalScrollBarVisibility="Auto" Text="{Binding Note4}" />
+                        </TabItem>
+                    </TabControl>
                 </Grid>
             </TabItem>
         </TabControl>
