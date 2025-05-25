@@ -80,6 +80,14 @@
                                             </StackPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Click="TargetStation">Set</Button>
+                                                <TextBox Text="{Binding SystemName}" Margin="3,0,0,0" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
                                 <DataGridTemplateColumn Header="Station Name">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -90,6 +98,14 @@
                                             </StackPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
+                                    <DataGridTemplateColumn.CellEditingTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Click="TargetStation">Set</Button>
+                                                <TextBox Text="{Binding StationName}" Margin="3,0,0,0" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellEditingTemplate>
                                 </DataGridTemplateColumn>
                                 <DataGridCheckBoxColumn Binding="{Binding Skip}" Header="Skip" IsReadOnly="False" />
                                 <DataGridCheckBoxColumn Binding="{Binding Completed}" Header="Completed" IsReadOnly="False" />
