@@ -156,6 +156,23 @@ namespace EDAP_Waypoint_Editor.Models
     public class LaunchCompleteEvent : EDMesgEvent
     { }
 
+    internal class SystemMapTargetStationByBookmarkAction : EDMesgAction
+    {
+        public string type { get; set; }
+        public int number { get; set; }
+    }
+
+    internal class GalaxyMapTargetStationByBookmarkAction : EDMesgAction
+    {
+        public string type { get; set; }
+        public int number { get; set; }
+    }
+
+    internal class GalaxyMapTargetSystemByNameAction : EDMesgAction
+    {
+        public string name { get; set; }
+    }
+
     public class LoadWaypointFileAction : EDMesgAction
     {
         #region Properties

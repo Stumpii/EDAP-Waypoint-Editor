@@ -847,5 +847,26 @@ namespace EDAP_Waypoint_Editor
         }
 
         #endregion Methods
+
+        private void TargetSystem(object sender, RoutedEventArgs e)
+        {
+            InternalWaypoint wp = (sender as Button).DataContext as InternalWaypoint;
+            //Debug.Print(model.SystemName);
+            //model.DynamicText = (new Random().Next(0, 100).ToString());
+
+            eDAP_EDMesg_Client.SendActionToEDAP(new GalaxyMapTargetSystemByNameAction() { name = wp.SystemName });
+        }
+
+        private void TargetStation(object sender, RoutedEventArgs e)
+        {
+            InternalWaypoint wp = (sender as Button).DataContext as InternalWaypoint;
+            //model.DynamicText = (new Random().Next(0, 100).ToString());
+            //Debug.Print(model.StationName);
+
+            if (wp.GalaxyBookmarkNumber > 0)
+                eDAP_EDMesg_Client.SendActionToEDAP(new GalaxyMapTargetStationByBookmarkAction() { type = wp.GalaxyBookmarkType, number = wp.GalaxyBookmarkNumber });
+            else if (wp.SystemBookmarkNumber > 0)
+                eDAP_EDMesg_Client.SendActionToEDAP(new SystemMapTargetStationByBookmarkAction() { type = wp.SystemBookmarkType, number = wp.SystemBookmarkNumber });
+        }
     }
 }

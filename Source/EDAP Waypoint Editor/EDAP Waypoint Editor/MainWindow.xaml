@@ -8,7 +8,7 @@
     x:Class="EDAP_Waypoint_Editor.MainWindow"
     Title="EDAP Waypoint Editor"
     Width="818"
-    Height="622"
+    Height="571"
     Closing="Window_Closing"
     Loaded="Window_Loaded"
     ResizeMode="CanResizeWithGrip"
@@ -45,9 +45,9 @@
                 Header="Waypoints">
                 <Grid Background="#FFE5E5E5">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" MinHeight="180" />
-                        <RowDefinition Height="Auto" />
                         <RowDefinition />
+                        <RowDefinition Height="Auto" MinHeight="142.46" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
@@ -71,8 +71,26 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Binding="{Binding SystemName}" Header="System Name" IsReadOnly="False" />
-                                <DataGridTextColumn Binding="{Binding StationName}" Header="Station Name" IsReadOnly="False" />
+                                <DataGridTemplateColumn Header="System Name">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Click="TargetSystem">Set</Button>
+                                                <TextBlock Text="{Binding SystemName}" Margin="3,0,0,0" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="Station Name">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Click="TargetStation">Set</Button>
+                                                <TextBlock Text="{Binding StationName}" Margin="3,0,0,0" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridCheckBoxColumn Binding="{Binding Skip}" Header="Skip" IsReadOnly="False" />
                                 <DataGridCheckBoxColumn Binding="{Binding Completed}" Header="Completed" IsReadOnly="False" />
                                 <DataGridTextColumn Binding="{Binding Comment}" Header="Comment" IsReadOnly="False" />
@@ -198,7 +216,7 @@
                             <Button x:Name="ButtonSellUp" Content="Up" Height="23" Width="52" Click="ButtonSellUp_Click" Margin="2,2,2,2" />
                             <Button x:Name="ButtonSellDown" Content="Down" Height="23" Width="52" Click="ButtonSellDown_Click" Margin="2,2,2,2" />
                             <Button x:Name="ButtonSellAdd" Content="Add" Height="23" Width="52" Click="ButtonSellAdd_Click" Margin="2,2,2,2" />
-                            <Button x:Name="ButtonSellAddAll" Content="Add All" Height="23" Width="52" Click="ButtonSellAddAll_Click" Margin="2,2,2,2" />
+                            <Button x:Name="ButtonSellAddAll" Content="Add All" Height="23" Width="52" Click="ButtonSellAddAll_Click" Margin="2,2,2,2" ToolTip="Add ALL:0 commo" />
                             <Button x:Name="ButtonSellDel" Content="Del" Height="23" Width="52" Click="ButtonSellDel_Click" Margin="2,2,2,2" />
                         </StackPanel>
                     </Grid>
