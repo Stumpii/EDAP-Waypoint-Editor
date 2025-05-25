@@ -1,5 +1,5 @@
 #define MyAppName "EDAP Waypoint Editor"
-#define MyAppVersion "1.7.0"
+#define MyAppVersion "1.8.0"
 #define MyAppPublisher "Steve Towner"
 ;#define MyAppURL "http://www.thefoolonthehill.net/drupal/content/controllogix-ladder-conversion-bc4"
 #define MyAppExeName "EDAP Waypoint Editor.exe"
