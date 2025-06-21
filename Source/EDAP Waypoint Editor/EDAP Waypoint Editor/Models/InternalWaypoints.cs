@@ -11,7 +11,7 @@ namespace EDAP_Waypoint_Editor.Models
     public class InternalWaypoints
     {
         public List<InternalWaypoint> Waypoints { get; set; } = new List<InternalWaypoint>();
-        public InternaGlobalshoppinglist globalshoppinglist { get; set; } = new InternaGlobalshoppinglist();
+        public InternaGlobalshoppinglist GlobalShoppingList { get; set; } = new InternaGlobalshoppinglist();
     }
 
     [AddINotifyPropertyChangedInterface]

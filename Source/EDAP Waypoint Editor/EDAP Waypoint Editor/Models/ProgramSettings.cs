@@ -27,6 +27,8 @@ namespace EDAP_Waypoint_Editor
         public string Note4 { get; set; }
 
         public List<ConstructionSite> ConstructionSites { get; set; } = new List<ConstructionSite>();
+        public string EDAPLocation { get; set; } = "";
+        public string EDAP_AutopilotLogPath { get; set; } = "";
 
         #endregion Properties
 

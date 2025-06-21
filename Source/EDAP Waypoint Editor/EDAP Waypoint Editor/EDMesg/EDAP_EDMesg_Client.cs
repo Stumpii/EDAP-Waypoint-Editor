@@ -153,6 +153,15 @@ namespace EDAP_Waypoint_Editor.Models
     public class LaunchAction : EDMesgAction
     { }
 
+    public class GenericAction : EDMesgAction
+    {
+        #region Properties
+
+        public string name { get; set; }
+
+        #endregion Properties
+    }
+
     public class LaunchCompleteEvent : EDMesgEvent
     { }
 

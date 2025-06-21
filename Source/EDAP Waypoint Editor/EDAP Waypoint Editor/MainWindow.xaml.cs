@@ -93,7 +93,7 @@ namespace EDAP_Waypoint_Editor
                     {
                         if (item.Key == "GlobalShoppingList")
                         {
-                            InternaGlobalshoppinglist globalshoppinglist = Waypoints.globalshoppinglist;
+                            InternaGlobalshoppinglist globalshoppinglist = Waypoints.GlobalShoppingList;
                             globalshoppinglist.Name = item.Key;
                             globalshoppinglist.UpdateCommodityCount = item.Value.UpdateCommodityCount;
                             globalshoppinglist.Skip = item.Value.Skip;
@@ -153,9 +153,11 @@ namespace EDAP_Waypoint_Editor
                 //this.DataContext = Waypoints.Waypoints;
 
                 DataGridWaypoints.ItemsSource = Waypoints.Waypoints;
-                DataGridGlobalShoppingList.ItemsSource = Waypoints.globalshoppinglist.BuyCommodities;
+                DataGridWaypoints.Items.Refresh();
 
-                GridGlobalShopping.DataContext = Waypoints.globalshoppinglist;
+                DataGridGlobalShoppingList.ItemsSource = Waypoints.GlobalShoppingList.BuyCommodities;
+
+                GridGlobalShopping.DataContext = Waypoints.GlobalShoppingList;
                 Griditems.DataContext = null;
             }
 
@@ -256,7 +258,7 @@ namespace EDAP_Waypoint_Editor
                 {
                     // Check if item exists already
                     bool found = false;
-                    foreach (var item2 in Waypoints.globalshoppinglist.BuyCommodities)
+                    foreach (var item2 in Waypoints.GlobalShoppingList.BuyCommodities)
                     {
                         // Check if item exists
                         if (item2.Name.ToUpper() == progItem.Resource.ToUpper())
@@ -269,7 +271,7 @@ namespace EDAP_Waypoint_Editor
 
                     // Add item if not found
                     if (!found)
-                        Waypoints.globalshoppinglist.BuyCommodities.Add(new ShoppingItem(progItem.Resource, progItem.Remaining));
+                        Waypoints.GlobalShoppingList.BuyCommodities.Add(new ShoppingItem(progItem.Resource, progItem.Remaining));
                 }
             }
 
@@ -334,7 +336,7 @@ namespace EDAP_Waypoint_Editor
 
         private void ButtonGlobalBuyAdd_Click(object sender, RoutedEventArgs e)
         {
-            Waypoints.globalshoppinglist.BuyCommodities.Add(new ShoppingItem("New Item"));
+            Waypoints.GlobalShoppingList.BuyCommodities.Add(new ShoppingItem("New Item"));
             DataGridGlobalShoppingList.Items.Refresh();
         }
 
@@ -344,7 +346,7 @@ namespace EDAP_Waypoint_Editor
             {
                 var item = (ShoppingItem)DataGridGlobalShoppingList.SelectedItem;
 
-                Waypoints.globalshoppinglist.BuyCommodities.Remove(item);
+                Waypoints.GlobalShoppingList.BuyCommodities.Remove(item);
 
                 DataGridGlobalShoppingList.Items.Refresh();
             }
@@ -352,7 +354,7 @@ namespace EDAP_Waypoint_Editor
 
         private void ButtonGlobalBuyDelAll_Click(object sender, RoutedEventArgs e)
         {
-            Waypoints.globalshoppinglist.BuyCommodities.Clear();
+            Waypoints.GlobalShoppingList.BuyCommodities.Clear();
             DataGridGlobalShoppingList.Items.Refresh();
         }
 
@@ -362,8 +364,8 @@ namespace EDAP_Waypoint_Editor
             {
                 var item = (ShoppingItem)DataGridGlobalShoppingList.SelectedItem;
 
-                int currindex = Waypoints.globalshoppinglist.BuyCommodities.IndexOf(item);
-                Waypoints.globalshoppinglist.BuyCommodities.Move(currindex, MoveDirection.Down);
+                int currindex = Waypoints.GlobalShoppingList.BuyCommodities.IndexOf(item);
+                Waypoints.GlobalShoppingList.BuyCommodities.Move(currindex, MoveDirection.Down);
 
                 DataGridGlobalShoppingList.Items.Refresh();
             }
@@ -375,8 +377,8 @@ namespace EDAP_Waypoint_Editor
             {
                 var item = (ShoppingItem)DataGridGlobalShoppingList.SelectedItem;
 
-                int currindex = Waypoints.globalshoppinglist.BuyCommodities.IndexOf(item);
-                Waypoints.globalshoppinglist.BuyCommodities.Move(currindex, MoveDirection.Up);
+                int currindex = Waypoints.GlobalShoppingList.BuyCommodities.IndexOf(item);
+                Waypoints.GlobalShoppingList.BuyCommodities.Move(currindex, MoveDirection.Up);
 
                 DataGridGlobalShoppingList.Items.Refresh();
             }
@@ -573,7 +575,8 @@ namespace EDAP_Waypoint_Editor
 
         private void EDAP_EDMesg_Client_EDAPLocation_Received(object sender, EDAP_EDMesg_Client.EDAPLocationEventArgs e)
         {
-            MessageBox.Show(e.EventData.path);
+            programSettings.EDAPLocation = e.EventData.path;
+            programSettings.EDAP_AutopilotLogPath = Path.Combine(e.EventData.path, "autopilot.log");
         }
 
         private void EDAP_EDMesg_Client_LaunchComplete_Received(object sender, EventArgs e)
@@ -647,11 +650,11 @@ namespace EDAP_Waypoint_Editor
             RawWaypoints.Clear();
 
             Waypoint waypointg = new Waypoint();
-            waypointg.Skip = Waypoints.globalshoppinglist.Skip;
-            waypointg.UpdateCommodityCount = Waypoints.globalshoppinglist.UpdateCommodityCount;
-            waypointg.Completed = Waypoints.globalshoppinglist.Completed;
+            waypointg.Skip = Waypoints.GlobalShoppingList.Skip;
+            waypointg.UpdateCommodityCount = Waypoints.GlobalShoppingList.UpdateCommodityCount;
+            waypointg.Completed = Waypoints.GlobalShoppingList.Completed;
 
-            foreach (var shopitem in Waypoints.globalshoppinglist.BuyCommodities)
+            foreach (var shopitem in Waypoints.GlobalShoppingList.BuyCommodities)
             {
                 if (!waypointg.BuyCommodities.ContainsKey(shopitem.Name))
                     waypointg.BuyCommodities.Add(shopitem.Name, shopitem.Quantity);
@@ -803,7 +806,6 @@ namespace EDAP_Waypoint_Editor
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            SaveWaypointFile("C:\\Users\\shuttle\\OneDrive\\Programming\\Python\\EDAPGui - Stumpii-Main\\waypoints\\waypoints1.json");
             SettingsSave();
         }
 
@@ -867,6 +869,15 @@ namespace EDAP_Waypoint_Editor
                 eDAP_EDMesg_Client.SendActionToEDAP(new GalaxyMapTargetStationByBookmarkAction() { type = wp.GalaxyBookmarkType, number = wp.GalaxyBookmarkNumber });
             else if (wp.SystemBookmarkNumber > 0)
                 eDAP_EDMesg_Client.SendActionToEDAP(new SystemMapTargetStationByBookmarkAction() { type = wp.SystemBookmarkType, number = wp.SystemBookmarkNumber });
+        }
+
+        private void MenuFileClose_Click(object sender, RoutedEventArgs e)
+        {
+        }
+
+        private void ToolBarButtonSaveForTCE_Click(object sender, RoutedEventArgs e)
+        {
+            eDAP_EDMesg_Client.SendActionToEDAP(new GenericAction() { name = "WriteTCEShoppingList" });
         }
     }
 }

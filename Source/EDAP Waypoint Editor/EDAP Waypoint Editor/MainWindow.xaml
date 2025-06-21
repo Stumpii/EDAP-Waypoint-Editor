@@ -2,8 +2,8 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:EDAP_Waypoint_Editor"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:EDAP_Waypoint_Editor"
     xmlns:Models="clr-namespace:EDAP_Waypoint_Editor.Models"
     x:Class="EDAP_Waypoint_Editor.MainWindow"
     Title="EDAP Waypoint Editor"
@@ -23,6 +23,7 @@
                 <MenuItem Header="_Open" Click="MenuFileOpen_Click" />
                 <MenuItem Header="_Save" Click="MenuFileSave_Click" />
                 <MenuItem Header="_Save As" Click="MenuFileSaveAs" />
+                <MenuItem Header="_Close" Click="MenuFileClose_Click" />
                 <Separator />
                 <MenuItem Header="_Exit" Click="MenuFileExit" />
             </MenuItem>
@@ -38,6 +39,9 @@
                 <Button x:Name="ToolBarButtonStopAllAssists" Content="Stop All Assists" Click="ToolBarButtonStopAllAssists_Click" />
                 <Button x:Name="ToolBarButtonStartWaypointAssist" Content="Start Waypoint Assist" Click="ToolBarButtonStartWaypointAssist_Click" />
                 <Button x:Name="ToolBarButtonLoadWaypointFile" Content="Load Waypoint File" Click="ToolBarButtonLoadWaypointFile_Click" />
+            </ToolBar>
+            <ToolBar>
+                <Button x:Name="ToolBarButtonSaveForTCE" Content="Save TCE Shopping List" Click="ToolBarButtonSaveForTCE_Click" />
             </ToolBar>
         </ToolBarTray>
         <TabControl>
@@ -58,7 +62,8 @@
                             <ColumnDefinition Width="41*" />
                         </Grid.ColumnDefinitions>
                         <DataGrid
-                            x:Name="DataGridWaypoints" d:ItemsSource="{d:SampleData}" AutoGenerateColumns="False"
+                            x:Name="DataGridWaypoints"
+			    AutoGenerateColumns="False"
                             GridLinesVisibility="None" IsTabStop="True" SelectionMode="Single" SelectionChanged="FavFoldersDataGrid_SelectionChanged" CanUserSortColumns="False" CanUserAddRows="False">
                             <DataGrid.DataContext>
                                 <Models:InternalWaypoints />
@@ -169,7 +174,6 @@
                         <Label Content="Buy Commodities" FontWeight="Bold" FontSize="14" />
                         <DataGrid
                             x:Name="DataGridBuyShoppingList"
-                            d:ItemsSource="{d:SampleData}"
                             AutoGenerateColumns="False"
                             GridLinesVisibility="None"
                             IsTabStop="True"
@@ -203,7 +207,6 @@
                         <Label Content="Sell Commodities" FontWeight="Bold" FontSize="14" Grid.Column="3" />
                         <DataGrid
                             x:Name="DataGridSellShoppingList"
-                            d:ItemsSource="{d:SampleData}"
                             AutoGenerateColumns="False"
                             GridLinesVisibility="None"
                             IsTabStop="True"
@@ -254,7 +257,8 @@
                             <ColumnDefinition />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <DataGrid x:Name="DataGridGlobalShoppingList" d:ItemsSource="{d:SampleData}" AutoGenerateColumns="False" GridLinesVisibility="None" IsTabStop="True" SelectionMode="Single" CanUserSortColumns="False" RowHeight="22">
+                        <DataGrid x:Name="DataGridGlobalShoppingList"
+			AutoGenerateColumns="False" GridLinesVisibility="None" IsTabStop="True" SelectionMode="Single" CanUserSortColumns="False" RowHeight="22">
                             <DataGrid.DataContext>
                                 <Models:InternaGlobalshoppinglist />
                             </DataGrid.DataContext>
@@ -333,7 +337,8 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <Button Content="Fetch Data" HorizontalAlignment="Left" Height="30" VerticalAlignment="Top" Width="73" Click="ButtonConstructionFetch_Click" Margin="3,3,3,3" Grid.Column="1" />
-                    <DataGrid x:Name="DataGridConstructionSites" d:ItemsSource="{d:SampleData}" AutoGenerateColumns="False" GridLinesVisibility="None" IsTabStop="True" SelectionMode="Single" CanUserSortColumns="False" RowHeight="22" Margin="3,3,3,3">
+                    <DataGrid x:Name="DataGridConstructionSites"
+		    AutoGenerateColumns="False" GridLinesVisibility="None" IsTabStop="True" SelectionMode="Single" CanUserSortColumns="False" RowHeight="22" Margin="3,3,3,3">
                         <DataGrid.DataContext>
                             <local:ConstructionSite />
                         </DataGrid.DataContext>
@@ -343,7 +348,8 @@
                             <DataGridHyperlinkColumn Binding="{Binding Path}" Header="Path" IsReadOnly="False" />
                         </DataGrid.Columns>
                     </DataGrid>
-                    <DataGrid x:Name="DataGridConstructionCommodities" d:ItemsSource="{d:SampleData}" GridLinesVisibility="None" IsTabStop="True" SelectionMode="Single" CanUserSortColumns="False" RowHeight="22" IsReadOnly="True" AutoGenerateColumns="False" Grid.Row="1" Margin="3,3,3,3">
+                    <DataGrid x:Name="DataGridConstructionCommodities"
+		    GridLinesVisibility="None" IsTabStop="True" SelectionMode="Single" CanUserSortColumns="False" RowHeight="22" IsReadOnly="True" AutoGenerateColumns="False" Grid.Row="1" Margin="3,3,3,3">
                         <DataGrid.Columns>
                             <DataGridTextColumn Binding="{Binding Resource}" Header="Resource" IsReadOnly="False" />
                             <DataGridTemplateColumn Header="Progress">
